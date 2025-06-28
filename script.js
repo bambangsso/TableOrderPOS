@@ -13,70 +13,70 @@ const menuData = [
         name: "Nasi Goreng Spesial",
         price: 25000,
         category: "makanan",
-        image: "https://via.placeholder.com/80x80/ff6b6b/white?text=🍛"
+        image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=150&h=150&fit=crop&crop=center"
     },
     {
         id: 2,
         name: "Mie Ayam Bakso",
         price: 20000,
         category: "makanan",
-        image: "https://via.placeholder.com/80x80/ff6b6b/white?text=🍜"
+        image: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=150&h=150&fit=crop&crop=center"
     },
     {
         id: 3,
         name: "Gado-Gado",
         price: 18000,
         category: "makanan",
-        image: "https://via.placeholder.com/80x80/ff6b6b/white?text=🥗"
+        image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=150&h=150&fit=crop&crop=center"
     },
     {
         id: 4,
         name: "Sate Ayam",
         price: 30000,
         category: "makanan",
-        image: "https://via.placeholder.com/80x80/ff6b6b/white?text=🍢"
+        image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=150&h=150&fit=crop&crop=center"
     },
     {
         id: 5,
         name: "Es Teh Manis",
         price: 8000,
         category: "minuman",
-        image: "https://via.placeholder.com/80x80/4CAF50/white?text=🧊"
+        image: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=150&h=150&fit=crop&crop=center"
     },
     {
         id: 6,
         name: "Jus Jeruk",
         price: 12000,
         category: "minuman",
-        image: "https://via.placeholder.com/80x80/4CAF50/white?text=🍊"
+        image: "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=150&h=150&fit=crop&crop=center"
     },
     {
         id: 7,
         name: "Kopi Tubruk",
         price: 10000,
         category: "minuman",
-        image: "https://via.placeholder.com/80x80/4CAF50/white?text=☕"
+        image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=150&h=150&fit=crop&crop=center"
     },
     {
         id: 8,
         name: "Es Cendol",
         price: 15000,
         category: "minuman",
-        image: "https://via.placeholder.com/80x80/4CAF50/white?text=🍧"
+        image: "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=150&h=150&fit=crop&crop=center"
     },
     {
         id: 9,
         name: "Ayam Bakar Madu",
         price: 35000,
         category: "menu-baru",
-        image: "https://via.placeholder.com/80x80/ffa500/white?text=🔥"
+        image: "https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=150&h=150&fit=crop&crop=center"
     },
     {
         id: 10,
         name: "Smoothie Mangga",
         price: 18000,
         category: "menu-baru",
-        image: "https://via.placeholder.com/80x80/ffa500/white?text=🥭"
+        image: "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=150&h=150&fit=crop&crop=center"
     }
 ];
 
