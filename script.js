@@ -12,61 +12,71 @@ const menuData = [
         id: 1,
         name: "Nasi Goreng Spesial",
         price: 25000,
-        category: "makanan"
+        category: "makanan",
+        image: "https://via.placeholder.com/80x80/ff6b6b/white?text=🍛"
     },
     {
         id: 2,
         name: "Mie Ayam Bakso",
         price: 20000,
-        category: "makanan"
+        category: "makanan",
+        image: "https://via.placeholder.com/80x80/ff6b6b/white?text=🍜"
     },
     {
         id: 3,
         name: "Gado-Gado",
         price: 18000,
-        category: "makanan"
+        category: "makanan",
+        image: "https://via.placeholder.com/80x80/ff6b6b/white?text=🥗"
     },
     {
         id: 4,
         name: "Sate Ayam",
         price: 30000,
-        category: "makanan"
+        category: "makanan",
+        image: "https://via.placeholder.com/80x80/ff6b6b/white?text=🍢"
     },
     {
         id: 5,
         name: "Es Teh Manis",
         price: 8000,
-        category: "minuman"
+        category: "minuman",
+        image: "https://via.placeholder.com/80x80/4CAF50/white?text=🧊"
     },
     {
         id: 6,
         name: "Jus Jeruk",
         price: 12000,
-        category: "minuman"
+        category: "minuman",
+        image: "https://via.placeholder.com/80x80/4CAF50/white?text=🍊"
     },
     {
         id: 7,
         name: "Kopi Tubruk",
         price: 10000,
-        category: "minuman"
+        category: "minuman",
+        image: "https://via.placeholder.com/80x80/4CAF50/white?text=☕"
     },
     {
         id: 8,
         name: "Es Cendol",
         price: 15000,
-        category: "minuman"
+        category: "minuman",
+        image: "https://via.placeholder.com/80x80/4CAF50/white?text=🍧"
     },
     {
         id: 9,
         name: "Ayam Bakar Madu",
         price: 35000,
-        category: "menu-baru"
+        category: "menu-baru",
+        image: "https://via.placeholder.com/80x80/ffa500/white?text=🔥"
     },
     {
         id: 10,
         name: "Smoothie Mangga",
         price: 18000,
-        category: "menu-baru"
+        category: "menu-baru",
+        image: "https://via.placeholder.com/80x80/ffa500/white?text=🥭"
     }
 ];
 
@@ -104,6 +114,7 @@ function createMenuItemElement(item) {
     const quantity = cartItem ? cartItem.quantity : 0;
     
     div.innerHTML = `
+        <img src="${item.image}" alt="${item.name}" class="menu-image">
         <div class="menu-info">
             <h3>${item.name}</h3>
             <p class="menu-price">Rp ${formatPrice(item.price)}</p>
