@@ -38,7 +38,12 @@ async function fetchMenuData() {
         
         // Process the API response
         if (data && Array.isArray(data)) {
-            menuData = data.map(item => ({
+            // Filter out items with "bahan baku" category
+            const filteredData = data.filter(item => 
+                item.category && item.category.toLowerCase() !== 'bahan baku'
+            );
+            
+            menuData = filteredData.map(item => ({
                 id: item.id || Math.random(),
                 name: item.name || 'No Name',
                 price: parseInt(item.sell_cost) || 0,
@@ -46,7 +51,7 @@ async function fetchMenuData() {
                 image: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/150'
             }));
             
-            // Extract unique categories
+            // Extract unique categories (excluding bahan baku)
             const uniqueCategories = [...new Set(menuData.map(item => item.category))];
             categories = ['Semua', ...uniqueCategories];
             
