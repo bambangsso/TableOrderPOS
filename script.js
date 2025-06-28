@@ -5,90 +5,97 @@ let cart = [];
 let currentPage = 'menu';
 let transactionNumber = null;
 let orderData = null;
+let menuData = [];
+let categories = [];
 
-// Sample menu data
-const menuData = [
-    {
-        id: 1,
-        name: "Nasi Goreng Spesial",
-        price: 25000,
-        category: "makanan",
-        image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=150&h=150&fit=crop&crop=center"
-    },
-    {
-        id: 2,
-        name: "Mie Ayam Bakso",
-        price: 20000,
-        category: "makanan",
-        image: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=150&h=150&fit=crop&crop=center"
-    },
-    {
-        id: 3,
-        name: "Gado-Gado",
-        price: 18000,
-        category: "makanan",
-        image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=150&h=150&fit=crop&crop=center"
-    },
-    {
-        id: 4,
-        name: "Sate Ayam",
-        price: 30000,
-        category: "makanan",
-        image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=150&h=150&fit=crop&crop=center"
-    },
-    {
-        id: 5,
-        name: "Es Teh Manis",
-        price: 8000,
-        category: "minuman",
-        image: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=150&h=150&fit=crop&crop=center"
-    },
-    {
-        id: 6,
-        name: "Jus Jeruk",
-        price: 12000,
-        category: "minuman",
-        image: "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=150&h=150&fit=crop&crop=center"
-    },
-    {
-        id: 7,
-        name: "Kopi Tubruk",
-        price: 10000,
-        category: "minuman",
-        image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=150&h=150&fit=crop&crop=center"
-    },
-    {
-        id: 8,
-        name: "Es Cendol",
-        price: 15000,
-        category: "minuman",
-        image: "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=150&h=150&fit=crop&crop=center"
-    },
-    {
-        id: 9,
-        name: "Ayam Bakar Madu",
-        price: 35000,
-        category: "menu-baru",
-        image: "https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=150&h=150&fit=crop&crop=center"
-    },
-    {
-        id: 10,
-        name: "Smoothie Mangga",
-        price: 18000,
-        category: "menu-baru",
-        image: "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=150&h=150&fit=crop&crop=center"
+// API configuration
+const API_CONFIG = {
+    url: 'https://artaka-api.com/api/products/show',
+    payload: {
+        user_id: "+62811987905",
+        outlet_id: "OTL-001",
+        category: "Semua",
+        is_active: "Active"
     }
-];
+};
+
+// Fetch menu data from API
+async function fetchMenuData() {
+    try {
+        const response = await fetch(API_CONFIG.url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(API_CONFIG.payload)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Process the API response
+        if (data && Array.isArray(data)) {
+            menuData = data.map(item => ({
+                id: item.id || Math.random(),
+                name: item.name || 'No Name',
+                price: parseInt(item.sell_cost) || 0,
+                category: item.category || 'Lainnya',
+                image: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/150'
+            }));
+            
+            // Extract unique categories
+            const uniqueCategories = [...new Set(menuData.map(item => item.category))];
+            categories = ['Semua', ...uniqueCategories];
+            
+            // Render category tabs
+            renderCategoryTabs();
+            
+            // Render menu
+            renderMenu();
+        } else {
+            console.error('Invalid API response format');
+            // Fallback to empty menu
+            menuData = [];
+            categories = ['Semua'];
+            renderCategoryTabs();
+            renderMenu();
+        }
+    } catch (error) {
+        console.error('Error fetching menu data:', error);
+        // Fallback to empty menu
+        menuData = [];
+        categories = ['Semua'];
+        renderCategoryTabs();
+        renderMenu();
+    }
+}
+
+// Render category tabs dynamically
+function renderCategoryTabs() {
+    const categoryTabs = document.querySelector('.category-tabs');
+    categoryTabs.innerHTML = '';
+    
+    categories.forEach((category, index) => {
+        const button = document.createElement('button');
+        button.className = `category-tab ${index === 0 ? 'active' : ''}`;
+        button.textContent = category;
+        button.onclick = () => filterCategory(category === 'Semua' ? 'all' : category);
+        categoryTabs.appendChild(button);
+    });
+}
 
 // Initialize app
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // Get table number from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     tableNumber = urlParams.get('table') || '1';
     document.getElementById('tableNumber').textContent = tableNumber;
     
-    // Render menu
-    renderMenu();
+    // Fetch menu data from API
+    await fetchMenuData();
     
     // Set initial page
     showPage('menu');
@@ -322,7 +329,14 @@ function filterCategory(category) {
     document.querySelectorAll('.category-tab').forEach(tab => {
         tab.classList.remove('active');
     });
-    event.target.classList.add('active');
+    
+    // Find and activate the clicked tab
+    const tabs = document.querySelectorAll('.category-tab');
+    tabs.forEach(tab => {
+        if ((category === 'all' && tab.textContent === 'Semua') || tab.textContent === category) {
+            tab.classList.add('active');
+        }
+    });
     
     // Filter menu items
     const filteredItems = category === 'all' ? menuData : menuData.filter(item => item.category === category);
