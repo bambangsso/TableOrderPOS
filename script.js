@@ -472,22 +472,49 @@ async function processOrder() {
     const pb1Tax = Math.round(subtotal * 0.11);
     const totalBill = subtotal + serviceCharge + pb1Tax;
     
-    // Prepare products array
-    const products = cart.map(item => {
+    // Prepare products array with error checking
+    console.log('Cart items:', cart);
+    console.log('Menu data:', menuData);
+    
+    const products = cart.map((item, index) => {
+        console.log(`Processing cart item ${index}:`, item);
+        
+        if (!item) {
+            console.error(`Cart item at index ${index} is undefined`);
+            return null;
+        }
+        
+        if (!item.id) {
+            console.error(`Cart item at index ${index} has no id:`, item);
+        }
+        
+        if (!item.name) {
+            console.error(`Cart item at index ${index} has no name:`, item);
+        }
+        
+        if (!item.price) {
+            console.error(`Cart item at index ${index} has no price:`, item);
+        }
+        
+        if (!item.quantity) {
+            console.error(`Cart item at index ${index} has no quantity:`, item);
+        }
+        
         // Find the original item from API response to get sku_id and buy_cost
         const originalItem = menuData.find(m => m.id == item.id);
+        console.log(`Original item for ${item.id}:`, originalItem);
         
         return {
-            sku_id: originalItem?.sku_id || item.id,
-            name: item.name,
+            sku_id: originalItem?.sku_id || item.id || 'unknown',
+            name: item.name || 'Unknown Item',
             category: originalItem?.category || 'Lainnya',
             variant: "",
             modifiers_price: 0,
             modifiers_option: "",
-            number_orders: item.quantity,
+            number_orders: item.quantity || 1,
             buy_cost: originalItem?.buy_cost || 0,
             buy_cost_discounted: 0,
-            sell_cost: item.price,
+            sell_cost: item.price || 0,
             weight: 0,
             units: "Pieces",
             salestype_up: 0,
@@ -499,12 +526,14 @@ async function processOrder() {
                 {
                     name: "PB1",
                     amount: 10,
-                    final: Math.round(item.price * item.quantity * 0.1)
+                    final: Math.round((item.price || 0) * (item.quantity || 1) * 0.1)
                 }
             ],
             description: item.notes || ""
         };
-    });
+    }).filter(product => product !== null);
+    
+    console.log('Processed products:', products);
     
     // Prepare API payload
     const payload = {
@@ -543,8 +572,11 @@ async function processOrder() {
         response: {}
     };
     
+    console.log('Final payload:', JSON.stringify(payload, null, 2));
+    
     try {
         // Call the API
+        console.log('Calling API...');
         const response = await fetch('https://artaka-api.com/api/onlinesales/add', {
             method: 'POST',
             headers: {
@@ -553,8 +585,13 @@ async function processOrder() {
             body: JSON.stringify(payload)
         });
         
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            console.error('API Error Response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
         }
         
         const result = await response.json();
@@ -564,8 +601,11 @@ async function processOrder() {
         document.getElementById('successModal').classList.add('active');
         
     } catch (error) {
-        console.error('Error submitting order:', error);
-        alert('Gagal mengirim pesanan. Silakan coba lagi.');
+        console.error('Detailed error submitting order:', error);
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        alert(`Gagal mengirim pesanan: ${error.message}`);
     }
 }
 
