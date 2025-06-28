@@ -122,7 +122,7 @@ function createMenuItemElement(item) {
     div.className = 'menu-item';
     div.setAttribute('data-category', item.category);
     
-    const cartItem = cart.find(c => c.id === item.id);
+    const cartItem = cart.find(c => c.id == item.id);
     const quantity = cartItem ? cartItem.quantity : 0;
     
     div.innerHTML = `
@@ -133,11 +133,11 @@ function createMenuItemElement(item) {
         </div>
         <div class="menu-actions">
             ${quantity === 0 ? 
-                `<button class="add-btn" onclick="addToCart(${item.id})">Tambah</button>` :
+                `<button class="add-btn" onclick="addToCart('${item.id}')">Tambah</button>` :
                 `<div class="quantity-controls">
-                    <button class="quantity-btn" onclick="decreaseQuantity(${item.id})">-</button>
+                    <button class="quantity-btn" onclick="decreaseQuantity('${item.id}')">-</button>
                     <span class="quantity-display">${quantity}</span>
-                    <button class="quantity-btn" onclick="increaseQuantity(${item.id})">+</button>
+                    <button class="quantity-btn" onclick="increaseQuantity('${item.id}')">+</button>
                 </div>`
             }
         </div>
@@ -148,8 +148,13 @@ function createMenuItemElement(item) {
 
 // Cart functions
 function addToCart(itemId) {
-    const item = menuData.find(m => m.id === itemId);
-    const existingItem = cart.find(c => c.id === itemId);
+    const item = menuData.find(m => m.id == itemId);
+    if (!item) {
+        console.error('Item not found:', itemId);
+        return;
+    }
+    
+    const existingItem = cart.find(c => c.id == itemId);
     
     if (existingItem) {
         existingItem.quantity++;
@@ -167,7 +172,7 @@ function addToCart(itemId) {
 }
 
 function increaseQuantity(itemId) {
-    const cartItem = cart.find(c => c.id === itemId);
+    const cartItem = cart.find(c => c.id == itemId);
     if (cartItem) {
         cartItem.quantity++;
         updateUI();
@@ -175,11 +180,11 @@ function increaseQuantity(itemId) {
 }
 
 function decreaseQuantity(itemId) {
-    const cartItem = cart.find(c => c.id === itemId);
+    const cartItem = cart.find(c => c.id == itemId);
     if (cartItem) {
         cartItem.quantity--;
         if (cartItem.quantity <= 0) {
-            cart = cart.filter(c => c.id !== itemId);
+            cart = cart.filter(c => c.id != itemId);
         }
         updateUI();
     }
