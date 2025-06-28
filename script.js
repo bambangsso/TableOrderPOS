@@ -47,22 +47,35 @@ async function fetchStoreData() {
         const data = await response.json();
         console.log('Store data response:', data);
 
-        // Process the API response
-        if (data && data.user_id && data.outlet_id && data.nama) {
-            storeData = {
-                user_id: data.user_id,
-                outlet_id: data.outlet_id,
-                nama: data.nama
-            };
+        // Process the API response - data is an array, get the first item
+        if (data && Array.isArray(data) && data.length > 0) {
+            const storeInfo = data[0];
+            if (storeInfo.user_id && storeInfo.outlet_id && storeInfo.nama) {
+                storeData = {
+                    user_id: storeInfo.user_id,
+                    outlet_id: storeInfo.outlet_id,
+                    nama: storeInfo.nama
+                };
 
-            // Update API config with dynamic values
-            API_CONFIG.payload.user_id = data.user_id;
-            API_CONFIG.payload.outlet_id = data.outlet_id;
+                // Update API config with dynamic values
+                API_CONFIG.payload.user_id = storeInfo.user_id;
+                API_CONFIG.payload.outlet_id = storeInfo.outlet_id;
 
-            // Update restaurant name in header
-            document.querySelector('.restaurant-name').textContent = data.nama;
+                // Update restaurant name in header
+                document.querySelector('.restaurant-name').textContent = storeInfo.nama;
 
-            console.log('Processed store data:', storeData);
+                console.log('Processed store data:', storeData);
+            } else {
+                console.error('Invalid store data structure');
+                // Fallback to default values
+                storeData = {
+                    user_id: "+62811987905",
+                    outlet_id: "OTL-001",
+                    nama: "Tawan Restaurant"
+                };
+                API_CONFIG.payload.user_id = storeData.user_id;
+                API_CONFIG.payload.outlet_id = storeData.outlet_id;
+            }
         } else {
             console.error('Invalid store API response format');
             // Fallback to default values
