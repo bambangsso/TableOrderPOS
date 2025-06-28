@@ -8,17 +8,84 @@ let orderData = null;
 let menuData = [];
 let categories = [];
 let taxData = [];
+let storeData = {};
 
-// API configuration
-const API_CONFIG = {
+// Store API configuration
+const STORE_API_CONFIG = {
+    url: 'https://artaka-api.com/api/getstoreid/show',
+    payload: {
+        mini_website_url: "https://orderin.id/bellevue-shopx"
+    }
+};
+
+// API configuration (will be updated after store API call)
+let API_CONFIG = {
     url: 'https://artaka-api.com/api/products/show',
     payload: {
-        user_id: "+62811987905",
-        outlet_id: "OTL-001",
+        user_id: "",
+        outlet_id: "",
         category: "Semua",
         is_active: "Active"
     }
 };
+
+// Fetch store data from API
+async function fetchStoreData() {
+    try {
+        const response = await fetch(STORE_API_CONFIG.url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(STORE_API_CONFIG.payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Store data response:', data);
+
+        // Process the API response
+        if (data && data.user_id && data.outlet_id && data.nama) {
+            storeData = {
+                user_id: data.user_id,
+                outlet_id: data.outlet_id,
+                nama: data.nama
+            };
+
+            // Update API config with dynamic values
+            API_CONFIG.payload.user_id = data.user_id;
+            API_CONFIG.payload.outlet_id = data.outlet_id;
+
+            // Update restaurant name in header
+            document.querySelector('.restaurant-name').textContent = data.nama;
+
+            console.log('Processed store data:', storeData);
+        } else {
+            console.error('Invalid store API response format');
+            // Fallback to default values
+            storeData = {
+                user_id: "+62811987905",
+                outlet_id: "OTL-001",
+                nama: "Tawan Restaurant"
+            };
+            API_CONFIG.payload.user_id = storeData.user_id;
+            API_CONFIG.payload.outlet_id = storeData.outlet_id;
+        }
+    } catch (error) {
+        console.error('Error fetching store data:', error);
+        // Fallback to default values
+        storeData = {
+            user_id: "+62811987905",
+            outlet_id: "OTL-001",
+            nama: "Tawan Restaurant"
+        };
+        API_CONFIG.payload.user_id = storeData.user_id;
+        API_CONFIG.payload.outlet_id = storeData.outlet_id;
+    }
+}
 
 // Fetch tax data from API
 async function fetchTaxData() {
@@ -29,8 +96,8 @@ async function fetchTaxData() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                user_id: "+62811987905",
-                outlet_id: "OTL-001"
+                user_id: storeData.user_id || "+62811987905",
+                outlet_id: storeData.outlet_id || "OTL-001"
             })
         });
 
@@ -141,7 +208,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     tableNumber = urlParams.get('table') || '1';
     document.getElementById('tableNumber').textContent = tableNumber;
 
-    // Fetch menu and tax data from API
+    // Fetch store data first, then menu and tax data
+    await fetchStoreData();
     await Promise.all([
         fetchMenuData(),
         fetchTaxData()
@@ -612,8 +680,8 @@ async function processOrder() {
 
     // Prepare API payload
     const payload = {
-        user_id: "+62811987905",
-        outlet_id: "OTL-001",
+        user_id: storeData.user_id || "+62811987905",
+        outlet_id: storeData.outlet_id || "OTL-001",
         customer: {
             name: `Table ${tableNumber}`,
             handphone: "",
