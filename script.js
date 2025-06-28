@@ -343,9 +343,9 @@ function createCheckoutItemElement(item) {
             ${item.notes ? `<p><small>Catatan: ${item.notes}</small></p>` : ''}
         </div>
         <div class="quantity-controls">
-            <button class="quantity-btn" onclick="decreaseQuantity(${item.id}); updateCheckoutSummary();">-</button>
+            <button class="quantity-btn" onclick="decreaseQuantity(${item.id}); updateCheckoutSummary(); document.getElementById('floatingCart').style.display = 'none';">-</button>
             <span class="quantity-display">${item.quantity}</span>
-            <button class="quantity-btn" onclick="increaseQuantity(${item.id}); updateCheckoutSummary();">+</button>
+            <button class="quantity-btn" onclick="increaseQuantity(${item.id}); updateCheckoutSummary(); document.getElementById('floatingCart').style.display = 'none';">+</button>
         </div>
     `;
     
