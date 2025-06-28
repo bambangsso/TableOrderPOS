@@ -29,20 +29,20 @@ async function fetchMenuData() {
             },
             body: JSON.stringify(API_CONFIG.payload)
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         // Process the API response
         if (data && Array.isArray(data)) {
             // Filter out items with "bahan baku" category
-            const filteredData = data.filter(item => 
+            const filteredData = data.filter(item =>
                 item.category && item.category.toLowerCase() !== 'bahan baku'
             );
-            
+
             menuData = filteredData.map(item => ({
                 id: item.id || Math.random(),
                 name: item.name || 'No Name',
@@ -52,14 +52,14 @@ async function fetchMenuData() {
                 sku_id: item.sku_id || item.id,
                 buy_cost: parseInt(item.buy_cost) || 0
             }));
-            
+
             // Extract unique categories (excluding bahan baku)
             const uniqueCategories = [...new Set(menuData.map(item => item.category))];
             categories = ['Semua', ...uniqueCategories];
-            
+
             // Render category tabs
             renderCategoryTabs();
-            
+
             // Render menu
             renderMenu();
         } else {
@@ -84,7 +84,7 @@ async function fetchMenuData() {
 function renderCategoryTabs() {
     const categoryTabs = document.querySelector('.category-tabs');
     categoryTabs.innerHTML = '';
-    
+
     categories.forEach((category, index) => {
         const button = document.createElement('button');
         button.className = `category-tab ${index === 0 ? 'active' : ''}`;
@@ -100,10 +100,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     const urlParams = new URLSearchParams(window.location.search);
     tableNumber = urlParams.get('table') || '1';
     document.getElementById('tableNumber').textContent = tableNumber;
-    
+
     // Fetch menu data from API
     await fetchMenuData();
-    
+
     // Set initial page
     showPage('menu');
 });
@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 function renderMenu(items = menuData) {
     const menuContainer = document.getElementById('menuItems');
     menuContainer.innerHTML = '';
-    
+
     items.forEach(item => {
         const menuItemElement = createMenuItemElement(item);
         menuContainer.appendChild(menuItemElement);
@@ -123,10 +123,10 @@ function createMenuItemElement(item) {
     const div = document.createElement('div');
     div.className = 'menu-item';
     div.setAttribute('data-category', item.category);
-    
+
     const cartItem = cart.find(c => c.id == item.id);
     const quantity = cartItem ? cartItem.quantity : 0;
-    
+
     div.innerHTML = `
         <img src="${item.image}" alt="${item.name}" class="menu-image">
         <div class="menu-info">
@@ -134,17 +134,17 @@ function createMenuItemElement(item) {
             <p class="menu-price">Rp ${formatPrice(item.price)}</p>
         </div>
         <div class="menu-actions">
-            ${quantity === 0 ? 
-                `<button class="add-btn" onclick="addToCart('${item.id}')">Tambah</button>` :
-                `<div class="quantity-controls">
+            ${quantity === 0 ?
+            `<button class="add-btn" onclick="addToCart('${item.id}')">Tambah</button>` :
+            `<div class="quantity-controls">
                     <button class="quantity-btn" onclick="decreaseQuantity('${item.id}')">-</button>
                     <span class="quantity-display">${quantity}</span>
                     <button class="quantity-btn" onclick="increaseQuantity('${item.id}')">+</button>
                 </div>`
-            }
+        }
         </div>
     `;
-    
+
     return div;
 }
 
@@ -155,9 +155,9 @@ function addToCart(itemId) {
         console.error('Item not found:', itemId);
         return;
     }
-    
+
     const existingItem = cart.find(c => c.id == itemId);
-    
+
     if (existingItem) {
         existingItem.quantity++;
     } else {
@@ -169,7 +169,7 @@ function addToCart(itemId) {
             notes: ''
         });
     }
-    
+
     updateUI();
 }
 
@@ -215,10 +215,10 @@ function updateFloatingCart() {
     const floatingCart = document.getElementById('floatingCart');
     const cartQuantity = document.getElementById('cartQuantity');
     const cartTotal = document.getElementById('cartTotal');
-    
+
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
     const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
+
     if (totalItems > 0) {
         floatingCart.style.display = 'flex';
         cartQuantity.textContent = `${totalItems} item${totalItems > 1 ? 's' : ''}`;
@@ -230,12 +230,12 @@ function updateFloatingCart() {
 
 function updateOrderList() {
     const orderItems = document.getElementById('orderItems');
-    
+
     if (cart.length === 0) {
         orderItems.innerHTML = '<p class="empty-order">Belum ada pesanan</p>';
         return;
     }
-    
+
     orderItems.innerHTML = '';
     cart.forEach(item => {
         const orderItemElement = createOrderItemElement(item);
@@ -252,16 +252,16 @@ function showOrderItemsInOrderTab() {
 function showOrderSummaryInOrderTab() {
     document.getElementById('orderContent').style.display = 'none';
     document.getElementById('orderSummaryContent').style.display = 'block';
-    
+
     // Update order summary content
     document.getElementById('orderListTransactionNumber').textContent = orderData.transactionNumber;
     document.getElementById('orderListTableNumber').textContent = orderData.tableNumber;
     document.getElementById('orderListOrderTime').textContent = orderData.orderTime;
     document.getElementById('orderListSummaryTotal').textContent = `Rp ${formatPrice(orderData.total)}`;
-    
+
     const summaryItems = document.getElementById('orderListSummaryItems');
     summaryItems.innerHTML = '';
-    
+
     orderData.items.forEach(item => {
         const div = document.createElement('div');
         div.className = 'order-item';
@@ -279,7 +279,7 @@ function showOrderSummaryInOrderTab() {
 function createOrderItemElement(item) {
     const div = document.createElement('div');
     div.className = 'order-item';
-    
+
     div.innerHTML = `
         <div class="order-item-info">
             <h4>${item.name}</h4>
@@ -293,7 +293,7 @@ function createOrderItemElement(item) {
             <button class="quantity-btn" onclick="increaseQuantity(${item.id})">+</button>
         </div>
     `;
-    
+
     return div;
 }
 
@@ -303,19 +303,19 @@ function showPage(pageName) {
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
     });
-    
+
     // Show selected page
     document.getElementById(pageName + 'Page').classList.add('active');
-    
+
     // Update navigation
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.remove('active');
     });
-    
+
     if (pageName === 'menu' || pageName === 'order') {
         document.querySelector(`.nav-btn[onclick="showPage('${pageName}')"]`).classList.add('active');
     }
-    
+
     // Handle order page content based on order status
     if (pageName === 'order') {
         if (orderData) {
@@ -324,14 +324,14 @@ function showPage(pageName) {
             showOrderItemsInOrderTab();
         }
     }
-    
+
     // Show/hide floating cart based on page
     if (pageName === 'menu' || pageName === 'order') {
         updateFloatingCart();
     } else {
         document.getElementById('floatingCart').style.display = 'none';
     }
-    
+
     currentPage = pageName;
 }
 
@@ -341,7 +341,7 @@ function filterCategory(category) {
     document.querySelectorAll('.category-tab').forEach(tab => {
         tab.classList.remove('active');
     });
-    
+
     // Find and activate the clicked tab
     const tabs = document.querySelectorAll('.category-tab');
     tabs.forEach(tab => {
@@ -349,7 +349,7 @@ function filterCategory(category) {
             tab.classList.add('active');
         }
     });
-    
+
     // Filter menu items
     const filteredItems = category === 'all' ? menuData : menuData.filter(item => item.category === category);
     renderMenu(filteredItems);
@@ -359,7 +359,7 @@ function filterCategory(category) {
 function toggleSearch() {
     const searchContainer = document.getElementById('searchContainer');
     const mainContent = document.querySelector('.main-content');
-    
+
     if (searchContainer.style.display === 'none' || !searchContainer.style.display) {
         searchContainer.style.display = 'block';
         mainContent.classList.add('with-search');
@@ -374,7 +374,7 @@ function toggleSearch() {
 
 function searchMenu() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const filteredItems = menuData.filter(item => 
+    const filteredItems = menuData.filter(item =>
         item.name.toLowerCase().includes(searchTerm)
     );
     renderMenu(filteredItems);
@@ -383,27 +383,27 @@ function searchMenu() {
 // Checkout process
 function showCheckout() {
     if (cart.length === 0) return;
-    
+
     const checkoutItems = document.getElementById('checkoutItems');
     checkoutItems.innerHTML = '';
-    
+
     cart.forEach(item => {
         const checkoutItemElement = createCheckoutItemElement(item);
         checkoutItems.appendChild(checkoutItemElement);
     });
-    
+
     updateCheckoutSummary();
-    
+
     // Hide floating cart during checkout
     document.getElementById('floatingCart').style.display = 'none';
-    
+
     showPage('checkout');
 }
 
 function createCheckoutItemElement(item) {
     const div = document.createElement('div');
     div.className = 'checkout-item';
-    
+
     div.innerHTML = `
         <div class="order-item-info">
             <h4>${item.name}</h4>
@@ -417,7 +417,7 @@ function createCheckoutItemElement(item) {
             <button class="quantity-btn" onclick="increaseQuantity(${item.id}); refreshCheckout();">+</button>
         </div>
     `;
-    
+
     return div;
 }
 
@@ -425,7 +425,7 @@ function updateCheckoutSummary() {
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const serviceCharge = Math.round(subtotal * 0.1);
     const total = subtotal + serviceCharge;
-    
+
     document.getElementById('subtotal').textContent = `Rp ${formatPrice(subtotal)}`;
     document.getElementById('serviceCharge').textContent = `Rp ${formatPrice(serviceCharge)}`;
     document.getElementById('totalAmount').textContent = `Rp ${formatPrice(total)}`;
@@ -435,18 +435,18 @@ function refreshCheckout() {
     // Re-render checkout items to reflect quantity changes
     const checkoutItems = document.getElementById('checkoutItems');
     checkoutItems.innerHTML = '';
-    
+
     cart.forEach(item => {
         const checkoutItemElement = createCheckoutItemElement(item);
         checkoutItems.appendChild(checkoutItemElement);
     });
-    
+
     // Update the summary
     updateCheckoutSummary();
-    
+
     // Keep floating cart hidden
     document.getElementById('floatingCart').style.display = 'none';
-    
+
     // If cart is empty, go back to menu
     if (cart.length === 0) {
         showPage('menu');
@@ -455,7 +455,7 @@ function refreshCheckout() {
 
 function confirmOrder() {
     if (cart.length === 0) return;
-    
+
     document.getElementById('confirmModal').classList.add('active');
 }
 
@@ -465,45 +465,45 @@ function closeModal() {
 
 async function processOrder() {
     closeModal();
-    
+
     // Calculate totals
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const serviceCharge = Math.round(subtotal * 0.1);
     const pb1Tax = Math.round(subtotal * 0.11);
     const totalBill = subtotal + serviceCharge + pb1Tax;
-    
+
     // Prepare products array with error checking
     console.log('Cart items:', cart);
     console.log('Menu data:', menuData);
-    
+
     const products = cart.map((item, index) => {
         console.log(`Processing cart item ${index}:`, item);
-        
+
         if (!item) {
             console.error(`Cart item at index ${index} is undefined`);
             return null;
         }
-        
+
         if (!item.id) {
             console.error(`Cart item at index ${index} has no id:`, item);
         }
-        
+
         if (!item.name) {
             console.error(`Cart item at index ${index} has no name:`, item);
         }
-        
+
         if (!item.price) {
             console.error(`Cart item at index ${index} has no price:`, item);
         }
-        
+
         if (!item.quantity) {
             console.error(`Cart item at index ${index} has no quantity:`, item);
         }
-        
+
         // Find the original item from API response to get sku_id and buy_cost
         const originalItem = menuData.find(m => m.id == item.id);
         console.log(`Original item for ${item.id}:`, originalItem);
-        
+
         return {
             sku_id: originalItem?.sku_id || item.id || 'unknown',
             name: item.name || 'Unknown Item',
@@ -532,12 +532,12 @@ async function processOrder() {
             description: item.notes || ""
         };
     }).filter(product => product !== null);
-    
+
     console.log('Processed products:', products);
-    
+
     // Prepare API payload
     const payload = {
-        user_id: "62811987905",
+        user_id: "+62811987905",
         outlet_id: "OTL-001",
         customer: {
             name: `Table ${tableNumber}`,
@@ -571,9 +571,9 @@ async function processOrder() {
         order_status: "completed",
         response: {}
     };
-    
+
     console.log('Final payload:', JSON.stringify(payload, null, 2));
-    
+
     try {
         // Call the API
         console.log('Calling API...');
@@ -584,22 +584,22 @@ async function processOrder() {
             },
             body: JSON.stringify(payload)
         });
-        
+
         console.log('Response status:', response.status);
         console.log('Response headers:', response.headers);
-        
+
         if (!response.ok) {
             const errorText = await response.text();
             console.error('API Error Response:', errorText);
             throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
         }
-        
+
         const result = await response.json();
         console.log('Order submitted successfully:', result);
-        
+
         // Show success modal
         document.getElementById('successModal').classList.add('active');
-        
+
     } catch (error) {
         console.error('Detailed error submitting order:', error);
         console.error('Error name:', error.name);
@@ -611,7 +611,7 @@ async function processOrder() {
 
 function closeSuccessModal() {
     document.getElementById('successModal').classList.remove('active');
-    
+
     // Generate transaction number and save order data
     transactionNumber = 'TXN' + Date.now().toString().slice(-8);
     orderData = {
@@ -623,7 +623,7 @@ function closeSuccessModal() {
         tableNumber: tableNumber,
         orderTime: new Date().toLocaleString('id-ID')
     };
-    
+
     // Clear cart and show order summary in order tab
     cart = [];
     updateUI();
@@ -635,10 +635,10 @@ function showOrderSummary() {
     document.getElementById('summaryTableNumber').textContent = orderData.tableNumber;
     document.getElementById('orderTime').textContent = orderData.orderTime;
     document.getElementById('summaryTotal').textContent = `Rp ${formatPrice(orderData.total)}`;
-    
+
     const summaryItems = document.getElementById('summaryItems');
     summaryItems.innerHTML = '';
-    
+
     orderData.items.forEach(item => {
         const div = document.createElement('div');
         div.className = 'order-item';
@@ -651,7 +651,7 @@ function showOrderSummary() {
         `;
         summaryItems.appendChild(div);
     });
-    
+
     showPage('orderSummary');
 }
 
@@ -660,12 +660,12 @@ function showPaymentPage() {
     const serviceCharge = orderData.serviceCharge;
     const tax = Math.round(subtotal * 0.11);
     const total = subtotal + serviceCharge + tax;
-    
+
     document.getElementById('paymentSubtotal').textContent = `Rp ${formatPrice(subtotal)}`;
     document.getElementById('paymentServiceCharge').textContent = `Rp ${formatPrice(serviceCharge)}`;
     document.getElementById('paymentTax').textContent = `Rp ${formatPrice(tax)}`;
     document.getElementById('paymentTotal').textContent = `Rp ${formatPrice(total)}`;
-    
+
     showPage('payment');
 }
 
@@ -681,11 +681,11 @@ function closeBill() {
     const serviceCharge = orderData.serviceCharge;
     const tax = Math.round(subtotal * 0.11);
     const total = subtotal + serviceCharge + tax;
-    
+
     document.getElementById('paymentDateTime').textContent = new Date().toLocaleString('id-ID');
     document.getElementById('paymentTransactionNumber').textContent = orderData.transactionNumber;
     document.getElementById('finalPaymentTotal').textContent = `Rp ${formatPrice(total)}`;
-    
+
     showPage('paymentSuccess');
 }
 
