@@ -530,7 +530,17 @@ async function processOrder() {
         },
         total_bill: totalBill,
         payment_method: "bayar di kasir",
-        payment_account: ""
+        payment_account: "",
+        payment_due_date: "",
+        total_payment: totalBill,
+        expedition: "dine in",
+        service: "Gratis",
+        weight: 0,
+        delivery_cost: 0,
+        notes: "",
+        total_buy_cost: 0,
+        order_status: "completed",
+        response: {}
     };
     
     try {
