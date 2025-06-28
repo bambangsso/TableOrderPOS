@@ -332,11 +332,13 @@ body {
 
 .order-item-info h4 {
     margin-bottom: 0.5rem;
+    font-size: 0.9rem;
 }
 
 .order-item-price {
     font-weight: bold;
     color: #ff6b6b;
+    font-size: 0.8rem;
 }
 
 .notes-input {
@@ -345,7 +347,7 @@ body {
     border: 1px solid #ddd;
     border-radius: 8px;
     margin-top: 0.5rem;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 /* Order Summary */
@@ -363,6 +365,7 @@ body {
     justify-content: space-between;
     padding: 0.5rem 0;
     border-bottom: 1px solid #eee;
+    font-size: 0.85rem;
 }
 
 .summary-row:last-child {
@@ -371,7 +374,7 @@ body {
 
 .summary-row.total {
     font-weight: bold;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     color: #ff6b6b;
     border-top: 2px solid #ff6b6b;
     margin-top: 0.5rem;
@@ -389,7 +392,7 @@ body {
     border: none;
     padding: 1rem;
     border-radius: 12px;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.3s;
@@ -428,12 +431,12 @@ body {
 }
 
 .payment-method i {
-    font-size: 2rem;
+    font-size: 1.8rem;
     color: #ff6b6b;
 }
 
 .payment-method span {
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: 500;
 }
 
@@ -448,6 +451,7 @@ body {
 
 .transaction-info p {
     margin-bottom: 0.5rem;
+    font-size: 0.85rem;
 }
 
 /* Payment Success */
@@ -507,11 +511,13 @@ body {
 .modal-content h3 {
     margin-bottom: 1rem;
     color: #333;
+    font-size: 1rem;
 }
 
 .modal-content p {
     margin-bottom: 2rem;
     color: #666;
+    font-size: 0.85rem;
 }
 
 .modal-buttons {
@@ -657,7 +663,7 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: #333;
     transition: background-color 0.3s;
 }
@@ -669,4 +675,5 @@ body {
 .page-header h2 {
     margin: 0;
     flex: 1;
+    font-size: 1.1rem;
 }
