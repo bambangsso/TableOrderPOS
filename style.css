@@ -257,6 +257,11 @@ body {
     font-size: 1.2rem;
     display: flex;
     align-items: center;
+    background: white;
+    color: #2ECCAA;
+    padding: 0.5rem;
+    border-radius: 50%;
+    margin-right: 0.5rem;
 }
 
 .cart-info {
