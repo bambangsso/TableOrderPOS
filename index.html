@@ -1,16 +1,190 @@
+
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width">
-  <title>replit</title>
-  <link href="style.css" rel="stylesheet" type="text/css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Order System</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-
 <body>
-  Hello world
-  <script src="script.js"></script>
-</body>
+    <!-- Header -->
+    <header class="header">
+        <div class="restaurant-info">
+            <img src="https://via.placeholder.com/50x50/ff6b6b/white?text=R" alt="Restaurant Logo" class="restaurant-logo">
+            <div>
+                <h1 class="restaurant-name">Tawan Restaurant</h1>
+                <p class="table-number">Table: <span id="tableNumber">-</span></p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="search-btn" onclick="toggleSearch()">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </header>
 
+    <!-- Search Bar -->
+    <div class="search-container" id="searchContainer">
+        <input type="text" id="searchInput" placeholder="Search menu..." onkeyup="searchMenu()">
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Menu Page -->
+        <div class="page menu-page active" id="menuPage">
+            <!-- Category Tabs -->
+            <div class="category-tabs">
+                <button class="category-tab active" onclick="filterCategory('all')">Semua</button>
+                <button class="category-tab" onclick="filterCategory('makanan')">Makanan</button>
+                <button class="category-tab" onclick="filterCategory('minuman')">Minuman</button>
+                <button class="category-tab" onclick="filterCategory('menu-baru')">Menu Baru</button>
+            </div>
+
+            <!-- Menu Items -->
+            <div class="menu-items" id="menuItems">
+                <!-- Menu items will be dynamically generated -->
+            </div>
+        </div>
+
+        <!-- Order List Page -->
+        <div class="page order-page" id="orderPage">
+            <h2>Daftar Pesanan</h2>
+            <div class="order-items" id="orderItems">
+                <p class="empty-order">Belum ada pesanan</p>
+            </div>
+        </div>
+
+        <!-- Checkout Page -->
+        <div class="page checkout-page" id="checkoutPage">
+            <h2>Konfirmasi Pesanan</h2>
+            <div class="checkout-items" id="checkoutItems"></div>
+            <div class="order-summary">
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span id="subtotal">Rp 0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Biaya Layanan (10%):</span>
+                    <span id="serviceCharge">Rp 0</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Total:</span>
+                    <span id="totalAmount">Rp 0</span>
+                </div>
+            </div>
+            <button class="confirm-btn" onclick="confirmOrder()">Konfirmasi Pesanan</button>
+        </div>
+
+        <!-- Order Summary Page -->
+        <div class="page order-summary-page" id="orderSummaryPage">
+            <h2>Ringkasan Pesanan</h2>
+            <div class="transaction-info">
+                <p><strong>No. Transaksi:</strong> <span id="transactionNumber"></span></p>
+                <p><strong>Meja:</strong> <span id="summaryTableNumber"></span></p>
+                <p><strong>Waktu:</strong> <span id="orderTime"></span></p>
+            </div>
+            <div class="summary-items" id="summaryItems"></div>
+            <div class="summary-total">
+                <h3>Total Pembayaran: <span id="summaryTotal">Rp 0</span></h3>
+            </div>
+            <button class="pay-btn" onclick="showPaymentPage()">Bayar</button>
+        </div>
+
+        <!-- Payment Page -->
+        <div class="page payment-page" id="paymentPage">
+            <h2>Metode Pembayaran</h2>
+            <div class="payment-methods">
+                <button class="payment-method" onclick="selectPaymentMethod('online')">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Pembayaran Online</span>
+                </button>
+                <button class="payment-method" onclick="selectPaymentMethod('cashier')">
+                    <i class="fas fa-cash-register"></i>
+                    <span>Bayar di Kasir</span>
+                </button>
+            </div>
+            <div class="payment-summary">
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span id="paymentSubtotal">Rp 0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Biaya Layanan:</span>
+                    <span id="paymentServiceCharge">Rp 0</span>
+                </div>
+                <div class="summary-row">
+                    <span>PB1 (11%):</span>
+                    <span id="paymentTax">Rp 0</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Total Pembayaran:</span>
+                    <span id="paymentTotal">Rp 0</span>
+                </div>
+            </div>
+            <button class="close-bill-btn" onclick="closeBill()">Tutup Tagihan</button>
+        </div>
+
+        <!-- Payment Success Page -->
+        <div class="page payment-success-page" id="paymentSuccessPage">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2>Pembayaran Berhasil!</h2>
+            <div class="payment-details">
+                <p><strong>Tanggal & Waktu:</strong> <span id="paymentDateTime"></span></p>
+                <p><strong>No. Transaksi:</strong> <span id="paymentTransactionNumber"></span></p>
+                <p><strong>Total Pembayaran:</strong> <span id="finalPaymentTotal">Rp 0</span></p>
+            </div>
+            <button class="ok-btn" onclick="resetApp()">OK</button>
+        </div>
+    </main>
+
+    <!-- Floating Cart -->
+    <div class="floating-cart" id="floatingCart" style="display: none;">
+        <div class="cart-info">
+            <span class="cart-quantity" id="cartQuantity">0</span>
+            <span class="cart-total" id="cartTotal">Rp 0</span>
+        </div>
+        <button class="checkout-btn" onclick="showCheckout()">Pesan</button>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" onclick="showPage('menu')">
+            <i class="fas fa-utensils"></i>
+            <span>Menu</span>
+        </button>
+        <button class="nav-btn" onclick="showPage('order')">
+            <i class="fas fa-list"></i>
+            <span>Daftar Pesanan</span>
+        </button>
+    </nav>
+
+    <!-- Modals -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <h3>Konfirmasi Pesanan</h3>
+            <p>Pastikan pesanan Anda sudah benar sebelum diproses oleh restoran.</p>
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closeModal()">Periksa Lagi</button>
+                <button class="btn-primary" onclick="processOrder()">Proses Sekarang</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h3>Pesanan Berhasil!</h3>
+            <p>Pesanan Anda telah berhasil diproses.</p>
+            <button class="btn-primary" onclick="closeSuccessModal()">OK</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
 </html>
