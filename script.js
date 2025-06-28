@@ -466,7 +466,6 @@ function createCheckoutItemElement(item) {
 
 function updateCheckoutSummary() {
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const serviceCharge = Math.round(subtotal * 0.1);
     
     // Calculate dynamic taxes
     let totalTaxes = 0;
@@ -478,10 +477,24 @@ function updateCheckoutSummary() {
         totalTaxes += taxAmount;
     });
     
-    const total = subtotal + serviceCharge + totalTaxes;
+    const total = subtotal + totalTaxes;
 
     document.getElementById('subtotal').textContent = `Rp ${formatPrice(subtotal)}`;
-    document.getElementById('serviceCharge').textContent = `Rp ${formatPrice(serviceCharge)}`;
+    
+    // Dynamically create tax rows
+    const taxRowsContainer = document.getElementById('taxRows');
+    taxRowsContainer.innerHTML = '';
+    
+    taxData.forEach(tax => {
+        const taxRow = document.createElement('div');
+        taxRow.className = 'summary-row';
+        taxRow.innerHTML = `
+            <span>${tax.name} (${tax.percentage}%):</span>
+            <span>Rp ${formatPrice(taxCalculations[tax.name])}</span>
+        `;
+        taxRowsContainer.appendChild(taxRow);
+    });
+    
     document.getElementById('totalAmount').textContent = `Rp ${formatPrice(total)}`;
 }
 
