@@ -382,7 +382,8 @@ function createCheckoutItemElement(item) {
         <div class="order-item-info">
             <h4>${item.name}</h4>
             <p class="order-item-price">Rp ${formatPrice(item.price)} x ${item.quantity}</p>
-            ${item.notes ? `<p><small>Catatan: ${item.notes}</small></p>` : ''}
+            <input type="text" class="notes-input" placeholder="Tambah catatan..." 
+                   value="${item.notes}" onchange="updateItemNotes(${item.id}, this.value)">
         </div>
         <div class="quantity-controls">
             <button class="quantity-btn" onclick="decreaseQuantity(${item.id}); refreshCheckout();">-</button>
