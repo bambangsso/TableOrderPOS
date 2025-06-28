@@ -48,7 +48,9 @@ async function fetchMenuData() {
                 name: item.name || 'No Name',
                 price: parseInt(item.sell_cost) || 0,
                 category: item.category || 'Lainnya',
-                image: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/150'
+                image: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/150',
+                sku_id: item.sku_id || item.id,
+                buy_cost: parseInt(item.buy_cost) || 0
             }));
             
             // Extract unique categories (excluding bahan baku)
@@ -461,9 +463,100 @@ function closeModal() {
     document.getElementById('confirmModal').classList.remove('active');
 }
 
-function processOrder() {
+async function processOrder() {
     closeModal();
-    document.getElementById('successModal').classList.add('active');
+    
+    // Calculate totals
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const serviceCharge = Math.round(subtotal * 0.1);
+    const pb1Tax = Math.round(subtotal * 0.11);
+    const totalBill = subtotal + serviceCharge + pb1Tax;
+    
+    // Prepare products array
+    const products = cart.map(item => {
+        // Find the original item from API response to get sku_id and buy_cost
+        const originalItem = menuData.find(m => m.id == item.id);
+        
+        return {
+            sku_id: originalItem?.sku_id || item.id,
+            name: item.name,
+            category: originalItem?.category || 'Lainnya',
+            variant: "",
+            modifiers_price: 0,
+            modifiers_option: "",
+            number_orders: item.quantity,
+            buy_cost: originalItem?.buy_cost || 0,
+            buy_cost_discounted: 0,
+            sell_cost: item.price,
+            weight: 0,
+            units: "Pieces",
+            salestype_up: 0,
+            discount_info: {
+                name: "",
+                amount: 0
+            },
+            taxInfo: [
+                {
+                    name: "PB1",
+                    amount: 10,
+                    final: Math.round(item.price * item.quantity * 0.1)
+                }
+            ],
+            description: item.notes || ""
+        };
+    });
+    
+    // Prepare API payload
+    const payload = {
+        user_id: "62811987905",
+        outlet_id: "OTL-001",
+        customer: {
+            name: `Table ${tableNumber}`,
+            handphone: "",
+            email: "",
+            alamat: "",
+            kecamatan: "",
+            kodepos: "",
+            subdistrics_info: {},
+            fcm_web_token: ""
+        },
+        products: products,
+        subtotal: subtotal,
+        total_diskon: 0,
+        total_tax: {
+            PPN: 0,
+            "Service Charge": serviceCharge,
+            PB1: pb1Tax
+        },
+        total_bill: totalBill,
+        payment_method: "bayar di kasir",
+        payment_account: ""
+    };
+    
+    try {
+        // Call the API
+        const response = await fetch('https://artaka-api.com/api/onlinesales/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Order submitted successfully:', result);
+        
+        // Show success modal
+        document.getElementById('successModal').classList.add('active');
+        
+    } catch (error) {
+        console.error('Error submitting order:', error);
+        alert('Gagal mengirim pesanan. Silakan coba lagi.');
+    }
 }
 
 function closeSuccessModal() {
