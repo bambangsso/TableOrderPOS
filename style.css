@@ -172,13 +172,13 @@ body {
 }
 
 .menu-info h3 {
-    font-size: 1.1rem;
-    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    margin-bottom: 0.4rem;
     color: #333;
 }
 
 .menu-price {
-    font-size: 1rem;
+    font-size: 0.85rem;
     font-weight: bold;
     color: #ff6b6b;
 }
@@ -581,17 +581,17 @@ body {
     }
 
     .menu-image {
-        width: 80px;
-        height: 80px;
+        width: 100px;
+        height: 100px;
     }
 
     .menu-info h3 {
-        font-size: 0.95rem;
-        margin-bottom: 0.25rem;
+        font-size: 0.8rem;
+        margin-bottom: 0.2rem;
     }
 
     .menu-price {
-        font-size: 0.9rem;
+        font-size: 0.75rem;
     }
 
     .menu-actions {
