@@ -160,8 +160,8 @@ body {
 }
 
 .menu-image {
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     border-radius: 8px;
     object-fit: cover;
     flex-shrink: 0;
@@ -172,13 +172,13 @@ body {
 }
 
 .menu-info h3 {
-    font-size: 0.95rem;
-    margin-bottom: 0.4rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.3rem;
     color: #333;
 }
 
 .menu-price {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: bold;
     color: #ff6b6b;
 }
@@ -581,17 +581,17 @@ body {
     }
 
     .menu-image {
-        width: 100px;
-        height: 100px;
+        width: 120px;
+        height: 120px;
     }
 
     .menu-info h3 {
-        font-size: 0.8rem;
-        margin-bottom: 0.2rem;
+        font-size: 0.7rem;
+        margin-bottom: 0.15rem;
     }
 
     .menu-price {
-        font-size: 0.75rem;
+        font-size: 0.65rem;
     }
 
     .menu-actions {
