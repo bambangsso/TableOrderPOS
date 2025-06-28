@@ -3,6 +3,7 @@
 let tableNumber = null;
 let cart = [];
 let currentPage = 'menu';
+let currentCategory = 'all';
 let transactionNumber = null;
 let orderData = null;
 let menuData = [];
@@ -339,7 +340,9 @@ function updateItemNotes(itemId, notes) {
 
 // UI update functions
 function updateUI() {
-    renderMenu();
+    // Maintain current category filter when updating UI
+    const filteredItems = currentCategory === 'all' ? menuData : menuData.filter(item => item.category === currentCategory);
+    renderMenu(filteredItems);
     updateFloatingCart();
     updateOrderList();
 }
@@ -470,6 +473,9 @@ function showPage(pageName) {
 
 // Category filtering
 function filterCategory(category) {
+    // Track current category
+    currentCategory = category;
+    
     // Update active tab
     document.querySelectorAll('.category-tab').forEach(tab => {
         tab.classList.remove('active');
