@@ -250,6 +250,13 @@ body {
     align-items: center;
     box-shadow: 0 4px 20px rgba(46,236,170,0.3);
     z-index: 100;
+    gap: 0.75rem;
+}
+
+.cart-icon {
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
 }
 
 .cart-info {
