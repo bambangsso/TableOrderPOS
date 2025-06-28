@@ -7,6 +7,7 @@ let transactionNumber = null;
 let orderData = null;
 let menuData = [];
 let categories = [];
+let taxData = [];
 
 // API configuration
 const API_CONFIG = {
@@ -18,6 +19,45 @@ const API_CONFIG = {
         is_active: "Active"
     }
 };
+
+// Fetch tax data from API
+async function fetchTaxData() {
+    try {
+        const response = await fetch('https://artaka-api.com/api/activetaxes/show', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                user_id: "+62811987905",
+                outlet_id: "OTL-001"
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Tax data response:', data);
+
+        // Process the API response
+        if (data && Array.isArray(data)) {
+            taxData = data.map(tax => ({
+                name: tax.name || 'Unknown Tax',
+                percentage: parseFloat(tax.percentage) || 0
+            }));
+        } else {
+            console.error('Invalid tax API response format');
+            taxData = [];
+        }
+
+        console.log('Processed tax data:', taxData);
+    } catch (error) {
+        console.error('Error fetching tax data:', error);
+        taxData = [];
+    }
+}
 
 // Fetch menu data from API
 async function fetchMenuData() {
@@ -101,8 +141,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     tableNumber = urlParams.get('table') || '1';
     document.getElementById('tableNumber').textContent = tableNumber;
 
-    // Fetch menu data from API
-    await fetchMenuData();
+    // Fetch menu and tax data from API
+    await Promise.all([
+        fetchMenuData(),
+        fetchTaxData()
+    ]);
 
     // Set initial page
     showPage('menu');
@@ -424,7 +467,18 @@ function createCheckoutItemElement(item) {
 function updateCheckoutSummary() {
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const serviceCharge = Math.round(subtotal * 0.1);
-    const total = subtotal + serviceCharge;
+    
+    // Calculate dynamic taxes
+    let totalTaxes = 0;
+    const taxCalculations = {};
+    
+    taxData.forEach(tax => {
+        const taxAmount = Math.round(subtotal * (tax.percentage / 100));
+        taxCalculations[tax.name] = taxAmount;
+        totalTaxes += taxAmount;
+    });
+    
+    const total = subtotal + serviceCharge + totalTaxes;
 
     document.getElementById('subtotal').textContent = `Rp ${formatPrice(subtotal)}`;
     document.getElementById('serviceCharge').textContent = `Rp ${formatPrice(serviceCharge)}`;
@@ -469,8 +523,18 @@ async function processOrder() {
     // Calculate totals
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const serviceCharge = Math.round(subtotal * 0.1);
-    const pb1Tax = Math.round(subtotal * 0.11);
-    const totalBill = subtotal + serviceCharge + pb1Tax;
+    
+    // Calculate dynamic taxes
+    let totalTaxes = 0;
+    const taxCalculations = {};
+    
+    taxData.forEach(tax => {
+        const taxAmount = Math.round(subtotal * (tax.percentage / 100));
+        taxCalculations[tax.name] = taxAmount;
+        totalTaxes += taxAmount;
+    });
+    
+    const totalBill = subtotal + serviceCharge + totalTaxes;
 
     // Prepare products array with error checking
     console.log('Cart items:', cart);
@@ -522,13 +586,11 @@ async function processOrder() {
                 name: "",
                 amount: 0
             },
-            taxInfo: [
-                {
-                    name: "PB1",
-                    amount: 10,
-                    final: Math.round((item.price || 0) * (item.quantity || 1) * 0.1)
-                }
-            ],
+            taxInfo: taxData.map(tax => ({
+                name: tax.name,
+                amount: tax.percentage,
+                final: Math.round((item.price || 0) * (item.quantity || 1) * (tax.percentage / 100))
+            })),
             description: item.notes || ""
         };
     }).filter(product => product !== null);
@@ -553,9 +615,8 @@ async function processOrder() {
         subtotal: subtotal,
         total_diskon: 0,
         total_tax: {
-            PPN: 0,
             "Service Charge": serviceCharge,
-            PB1: pb1Tax
+            ...taxCalculations
         },
         total_bill: totalBill,
         payment_method: "bayar di kasir",
@@ -614,11 +675,20 @@ function closeSuccessModal() {
 
     // Generate transaction number and save order data
     transactionNumber = 'TXN' + Date.now().toString().slice(-8);
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const serviceCharge = Math.round(subtotal * 0.1);
+    
+    // Calculate dynamic taxes for order data
+    let totalTaxes = 0;
+    taxData.forEach(tax => {
+        totalTaxes += Math.round(subtotal * (tax.percentage / 100));
+    });
+    
     orderData = {
         items: [...cart],
-        subtotal: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        serviceCharge: Math.round(cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.1),
-        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) + Math.round(cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.1),
+        subtotal: subtotal,
+        serviceCharge: serviceCharge,
+        total: subtotal + serviceCharge + totalTaxes,
         transactionNumber: transactionNumber,
         tableNumber: tableNumber,
         orderTime: new Date().toLocaleString('id-ID')
@@ -658,12 +728,18 @@ function showOrderSummary() {
 function showPaymentPage() {
     const subtotal = orderData.subtotal;
     const serviceCharge = orderData.serviceCharge;
-    const tax = Math.round(subtotal * 0.11);
-    const total = subtotal + serviceCharge + tax;
+    
+    // Calculate dynamic taxes for payment page
+    let totalTaxes = 0;
+    taxData.forEach(tax => {
+        totalTaxes += Math.round(subtotal * (tax.percentage / 100));
+    });
+    
+    const total = subtotal + serviceCharge + totalTaxes;
 
     document.getElementById('paymentSubtotal').textContent = `Rp ${formatPrice(subtotal)}`;
     document.getElementById('paymentServiceCharge').textContent = `Rp ${formatPrice(serviceCharge)}`;
-    document.getElementById('paymentTax').textContent = `Rp ${formatPrice(tax)}`;
+    document.getElementById('paymentTax').textContent = `Rp ${formatPrice(totalTaxes)}`;
     document.getElementById('paymentTotal').textContent = `Rp ${formatPrice(total)}`;
 
     showPage('payment');
@@ -679,8 +755,14 @@ function selectPaymentMethod(method) {
 function closeBill() {
     const subtotal = orderData.subtotal;
     const serviceCharge = orderData.serviceCharge;
-    const tax = Math.round(subtotal * 0.11);
-    const total = subtotal + serviceCharge + tax;
+    
+    // Calculate dynamic taxes for final payment
+    let totalTaxes = 0;
+    taxData.forEach(tax => {
+        totalTaxes += Math.round(subtotal * (tax.percentage / 100));
+    });
+    
+    const total = subtotal + serviceCharge + totalTaxes;
 
     document.getElementById('paymentDateTime').textContent = new Date().toLocaleString('id-ID');
     document.getElementById('paymentTransactionNumber').textContent = orderData.transactionNumber;
