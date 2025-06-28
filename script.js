@@ -343,9 +343,9 @@ function createCheckoutItemElement(item) {
             ${item.notes ? `<p><small>Catatan: ${item.notes}</small></p>` : ''}
         </div>
         <div class="quantity-controls">
-            <button class="quantity-btn" onclick="decreaseQuantity(${item.id}); updateCheckoutSummary(); document.getElementById('floatingCart').style.display = 'none';">-</button>
+            <button class="quantity-btn" onclick="decreaseQuantity(${item.id}); refreshCheckout();">-</button>
             <span class="quantity-display">${item.quantity}</span>
-            <button class="quantity-btn" onclick="increaseQuantity(${item.id}); updateCheckoutSummary(); document.getElementById('floatingCart').style.display = 'none';">+</button>
+            <button class="quantity-btn" onclick="increaseQuantity(${item.id}); refreshCheckout();">+</button>
         </div>
     `;
     
@@ -360,6 +360,28 @@ function updateCheckoutSummary() {
     document.getElementById('subtotal').textContent = `Rp ${formatPrice(subtotal)}`;
     document.getElementById('serviceCharge').textContent = `Rp ${formatPrice(serviceCharge)}`;
     document.getElementById('totalAmount').textContent = `Rp ${formatPrice(total)}`;
+}
+
+function refreshCheckout() {
+    // Re-render checkout items to reflect quantity changes
+    const checkoutItems = document.getElementById('checkoutItems');
+    checkoutItems.innerHTML = '';
+    
+    cart.forEach(item => {
+        const checkoutItemElement = createCheckoutItemElement(item);
+        checkoutItems.appendChild(checkoutItemElement);
+    });
+    
+    // Update the summary
+    updateCheckoutSummary();
+    
+    // Keep floating cart hidden
+    document.getElementById('floatingCart').style.display = 'none';
+    
+    // If cart is empty, go back to menu
+    if (cart.length === 0) {
+        showPage('menu');
+    }
 }
 
 function confirmOrder() {
