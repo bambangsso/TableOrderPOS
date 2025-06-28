@@ -10,11 +10,11 @@ let categories = [];
 let taxData = [];
 let storeData = {};
 
-// Store API configuration
-const STORE_API_CONFIG = {
+// Store API configuration (will be updated from URL parameters)
+let STORE_API_CONFIG = {
     url: 'https://artaka-api.com/api/getstoreid/show',
     payload: {
-        mini_website_url: "https://orderin.id/bellevue-shopx"
+        mini_website_url: ""
     }
 };
 
@@ -216,10 +216,19 @@ function renderCategoryTabs() {
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', async function() {
-    // Get table number from URL parameters
+    // Get parameters from URL
     const urlParams = new URLSearchParams(window.location.search);
     tableNumber = urlParams.get('table') || '1';
+    const restoName = urlParams.get('restoname') || 'bellevue-shopx';
+    
+    // Update table number display
     document.getElementById('tableNumber').textContent = tableNumber;
+    
+    // Update store API configuration with restaurant name from URL
+    STORE_API_CONFIG.payload.mini_website_url = `https://orderin.id/${restoName}`;
+    
+    console.log('URL Parameters:', { table: tableNumber, restoname: restoName });
+    console.log('Store API URL will be:', STORE_API_CONFIG.payload.mini_website_url);
 
     // Fetch store data first, then menu and tax data
     await fetchStoreData();
