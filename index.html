@@ -51,8 +51,22 @@
         <!-- Order List Page -->
         <div class="page order-page" id="orderPage">
             <h2>Daftar Pesanan</h2>
-            <div class="order-items" id="orderItems">
-                <p class="empty-order">Belum ada pesanan</p>
+            <div id="orderContent">
+                <div class="order-items" id="orderItems">
+                    <p class="empty-order">Belum ada pesanan</p>
+                </div>
+            </div>
+            <div id="orderSummaryContent" style="display: none;">
+                <div class="transaction-info">
+                    <p><strong>No. Transaksi:</strong> <span id="orderListTransactionNumber"></span></p>
+                    <p><strong>Meja:</strong> <span id="orderListTableNumber"></span></p>
+                    <p><strong>Waktu:</strong> <span id="orderListOrderTime"></span></p>
+                </div>
+                <div class="summary-items" id="orderListSummaryItems"></div>
+                <div class="summary-total">
+                    <h3>Total Pembayaran: <span id="orderListSummaryTotal">Rp 0</span></h3>
+                </div>
+                <button class="pay-btn" onclick="showPaymentPage()">Bayar</button>
             </div>
         </div>
 
@@ -164,7 +178,7 @@
         </button>
         <button class="nav-btn" onclick="showPage('order')">
             <i class="fas fa-list"></i>
-            <span>Daftar Pesanan</span>
+            <span>Order List</span>
         </button>
     </nav>
 

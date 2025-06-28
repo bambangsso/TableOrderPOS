@@ -224,6 +224,39 @@ function updateOrderList() {
     });
 }
 
+function showOrderItemsInOrderTab() {
+    document.getElementById('orderContent').style.display = 'block';
+    document.getElementById('orderSummaryContent').style.display = 'none';
+    updateOrderList();
+}
+
+function showOrderSummaryInOrderTab() {
+    document.getElementById('orderContent').style.display = 'none';
+    document.getElementById('orderSummaryContent').style.display = 'block';
+    
+    // Update order summary content
+    document.getElementById('orderListTransactionNumber').textContent = orderData.transactionNumber;
+    document.getElementById('orderListTableNumber').textContent = orderData.tableNumber;
+    document.getElementById('orderListOrderTime').textContent = orderData.orderTime;
+    document.getElementById('orderListSummaryTotal').textContent = `Rp ${formatPrice(orderData.total)}`;
+    
+    const summaryItems = document.getElementById('orderListSummaryItems');
+    summaryItems.innerHTML = '';
+    
+    orderData.items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'order-item';
+        div.innerHTML = `
+            <div class="order-item-info">
+                <h4>${item.name}</h4>
+                <p class="order-item-price">Rp ${formatPrice(item.price)} x ${item.quantity} = Rp ${formatPrice(item.price * item.quantity)}</p>
+                ${item.notes ? `<p><small>Catatan: ${item.notes}</small></p>` : ''}
+            </div>
+        `;
+        summaryItems.appendChild(div);
+    });
+}
+
 function createOrderItemElement(item) {
     const div = document.createElement('div');
     div.className = 'order-item';
@@ -262,6 +295,15 @@ function showPage(pageName) {
     
     if (pageName === 'menu' || pageName === 'order') {
         document.querySelector(`.nav-btn[onclick="showPage('${pageName}')"]`).classList.add('active');
+    }
+    
+    // Handle order page content based on order status
+    if (pageName === 'order') {
+        if (orderData) {
+            showOrderSummaryInOrderTab();
+        } else {
+            showOrderItemsInOrderTab();
+        }
     }
     
     // Show/hide floating cart based on page
@@ -414,7 +456,10 @@ function closeSuccessModal() {
         orderTime: new Date().toLocaleString('id-ID')
     };
     
-    showOrderSummary();
+    // Clear cart and show order summary in order tab
+    cart = [];
+    updateUI();
+    showPage('order');
 }
 
 function showOrderSummary() {
