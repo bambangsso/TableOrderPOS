@@ -190,18 +190,18 @@ body {
 }
 
 .add-btn {
-    background: #2ECCAA;
-    color: white;
-    border: none;
+    background: white;
+    color: #2ECCAA;
+    border: 2px solid #2ECCAA;
     padding: 0.5rem 1rem;
     border-radius: 8px;
     cursor: pointer;
     font-weight: 500;
-    transition: background-color 0.3s;
+    transition: all 0.3s;
 }
 
 .add-btn:hover {
-    background: #26b3aa;
+    background: #f0fffe;
 }
 
 .quantity-controls {
@@ -211,9 +211,9 @@ body {
 }
 
 .quantity-btn {
-    background: #2ECCAA;
-    color: white;
-    border: none;
+    background: white;
+    color: #2ECCAA;
+    border: 2px solid #2ECCAA;
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -222,6 +222,11 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.3s;
+}
+
+.quantity-btn:hover {
+    background: #f0fffe;
 }
 
 .quantity-display {
@@ -238,8 +243,8 @@ body {
     right: 1rem;
     background: #2ECCAA;
     color: white;
-    padding: 1rem;
-    border-radius: 12px;
+    padding: 0.75rem;
+    border-radius: 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -254,12 +259,12 @@ body {
 }
 
 .cart-quantity {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     opacity: 0.9;
 }
 
 .cart-total {
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: bold;
 }
 
@@ -267,10 +272,11 @@ body {
     background: white;
     color: #2ECCAA;
     border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
     font-weight: bold;
     cursor: pointer;
+    font-size: 0.9rem;
 }
 
 /* Bottom Navigation */
