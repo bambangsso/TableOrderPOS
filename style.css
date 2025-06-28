@@ -491,11 +491,11 @@ body {
         flex-direction: column;
         gap: 0.25rem;
     }
-    
+
     .payment-details p strong {
         font-size: 0.9rem;
     }
-    
+
     .payment-details p span {
         font-size: 0.95rem;
         font-weight: 600;
@@ -700,3 +700,13 @@ body {
     flex: 1;
     font-size: 1.1rem;
 }
+
+.summary-total {
+    margin-bottom: 2rem;
+}
+
+.summary-total h3 {
+    margin-bottom: 0;
+}
+
+.pay-btn,
