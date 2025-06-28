@@ -264,6 +264,13 @@ function showPage(pageName) {
         document.querySelector(`.nav-btn[onclick="showPage('${pageName}')"]`).classList.add('active');
     }
     
+    // Show/hide floating cart based on page
+    if (pageName === 'menu' || pageName === 'order') {
+        updateFloatingCart();
+    } else {
+        document.getElementById('floatingCart').style.display = 'none';
+    }
+    
     currentPage = pageName;
 }
 
@@ -318,6 +325,10 @@ function showCheckout() {
     });
     
     updateCheckoutSummary();
+    
+    // Hide floating cart during checkout
+    document.getElementById('floatingCart').style.display = 'none';
+    
     showPage('checkout');
 }
 
