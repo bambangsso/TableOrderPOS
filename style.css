@@ -486,6 +486,23 @@ body {
     justify-content: space-between;
 }
 
+@media (max-width: 480px) {
+    .payment-details p {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .payment-details p strong {
+        font-size: 0.9rem;
+    }
+    
+    .payment-details p span {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #2ECCAA;
+    }
+}
+
 /* Modals */
 .modal {
     display: none;
