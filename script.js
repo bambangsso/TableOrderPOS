@@ -256,7 +256,8 @@ function renderMenu(items = menuData) {
 function createMenuItemElement(item) {
     const cartItem = cart.find(c => c.id == item.id);
     const quantity = cartItem ? cartItem.quantity : 0;
-    const displayName = item.variant ? `${item.name} - ${item.variant}` : item.name;
+    const variantText = item.variant ? item.variant.split('|')[0].trim() : '';
+    const displayName = variantText ? `${item.name} - ${variantText}` : item.name;
 
     const div = document.createElement('div');
     div.className = 'menu-item';
