@@ -9,6 +9,8 @@ let menuData = [];
 let categories = [];
 let taxData = [];
 let storeData = {};
+let selectedItemForVariant = null;
+let selectedVariantOption = null;
 
 // Store API configuration (will be updated from URL parameters)
 let STORE_API_CONFIG = {
@@ -254,8 +256,9 @@ function renderMenu(items = menuData) {
 }
 
 function createMenuItemElement(item) {
-    const cartItem = cart.find(c => c.id == item.id);
-    const quantity = cartItem ? cartItem.quantity : 0;
+    // Calculate total quantity for this item (considering all variant notes)
+    const cartItems = cart.filter(c => c.id == item.id);
+    const quantity = cartItems.reduce((sum, c) => sum + c.quantity, 0);
     const variantText = item.variant ? item.variant.split('|')[0].trim() : '';
     const displayName = variantText ? `${item.name} - ${variantText}` : item.name;
 
@@ -291,7 +294,23 @@ function addToCart(itemId) {
         return;
     }
 
-    const existingItem = cart.find(c => c.id == itemId);
+    // Check if item has variant options (contains | in variant)
+    if (item.variant && item.variant.includes('|')) {
+        const variantParts = item.variant.split('|');
+        if (variantParts.length > 1 && variantParts[1].trim()) {
+            // Show variant selection modal
+            selectedItemForVariant = item;
+            showVariantModal(item);
+            return;
+        }
+    }
+
+    // No variants or no options after |, add directly to cart
+    addItemToCart(item, '');
+}
+
+function addItemToCart(item, variantNote) {
+    const existingItem = cart.find(c => c.id == item.id && c.notes === variantNote);
 
     if (existingItem) {
         existingItem.quantity++;
@@ -301,7 +320,7 @@ function addToCart(itemId) {
             name: item.name,
             price: item.price,
             quantity: 1,
-            notes: ''
+            notes: variantNote
         });
     }
 
@@ -887,6 +906,74 @@ function resetApp() {
     transactionNumber = null;
     updateUI();
     showPage('menu');
+}
+
+// Variant selection functions
+function showVariantModal(item) {
+    const modal = document.getElementById('variantModal');
+    const optionsContainer = document.getElementById('variantOptions');
+    
+    // Clear previous options
+    optionsContainer.innerHTML = '';
+    
+    // Get variant options (text after |)
+    const variantParts = item.variant.split('|');
+    if (variantParts.length > 1) {
+        const optionsText = variantParts[1].trim();
+        const options = optionsText.split(',').map(opt => opt.trim()).filter(opt => opt);
+        
+        // Create radio buttons for each option
+        options.forEach((option, index) => {
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'variant-option';
+            optionDiv.onclick = () => selectVariantOption(option, optionDiv);
+            
+            optionDiv.innerHTML = `
+                <input type="radio" name="variantOption" value="${option}" id="variant_${index}">
+                <label for="variant_${index}">${option}</label>
+            `;
+            
+            optionsContainer.appendChild(optionDiv);
+        });
+    }
+    
+    // Reset selection
+    selectedVariantOption = null;
+    
+    // Show modal
+    modal.classList.add('active');
+}
+
+function selectVariantOption(option, optionElement) {
+    // Remove previous selection
+    document.querySelectorAll('.variant-option').forEach(opt => {
+        opt.classList.remove('selected');
+        opt.querySelector('input').checked = false;
+    });
+    
+    // Select current option
+    optionElement.classList.add('selected');
+    optionElement.querySelector('input').checked = true;
+    selectedVariantOption = option;
+}
+
+function confirmVariantSelection() {
+    if (!selectedVariantOption || !selectedItemForVariant) {
+        alert('Silakan pilih varian terlebih dahulu');
+        return;
+    }
+    
+    // Add item to cart with selected variant as note
+    addItemToCart(selectedItemForVariant, selectedVariantOption);
+    
+    // Close modal
+    closeVariantModal();
+}
+
+function closeVariantModal() {
+    document.getElementById('variantModal').classList.remove('active');
+    selectedItemForVariant = null;
+    selectedVariantOption = null;
 }
 
 // Utility functions
