@@ -1,4 +1,3 @@
-
 // Global variables
 let tableNumber = null;
 let cart = [];
@@ -171,7 +170,8 @@ async function fetchMenuData() {
                 category: item.category || 'Lainnya',
                 image: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/150',
                 sku_id: item.sku_id || item.id,
-                buy_cost: parseInt(item.buy_cost) || 0
+                buy_cost: parseInt(item.buy_cost) || 0,
+                variant: item.variant || ''
             }));
 
             // Extract unique categories (excluding bahan baku)
@@ -221,13 +221,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     const urlParams = new URLSearchParams(window.location.search);
     tableNumber = urlParams.get('table') || '1';
     const restoName = urlParams.get('restoname') || 'bellevue-shopx';
-    
+
     // Update table number display
     document.getElementById('tableNumber').textContent = tableNumber;
-    
+
     // Update store API configuration with restaurant name from URL
     STORE_API_CONFIG.payload.mini_website_url = `https://orderin.id/${restoName}`;
-    
+
     console.log('URL Parameters:', { table: tableNumber, restoname: restoName });
     console.log('Store API URL will be:', STORE_API_CONFIG.payload.mini_website_url);
 
@@ -254,17 +254,14 @@ function renderMenu(items = menuData) {
 }
 
 function createMenuItemElement(item) {
-    const div = document.createElement('div');
-    div.className = 'menu-item';
-    div.setAttribute('data-category', item.category);
-
     const cartItem = cart.find(c => c.id == item.id);
     const quantity = cartItem ? cartItem.quantity : 0;
+    const displayName = item.variant ? `${item.name} - ${item.variant}` : item.name;
 
     div.innerHTML = `
-        <img src="${item.image}" alt="${item.name}" class="menu-image">
+        <img src="${item.image}" alt="${displayName}" class="menu-image">
         <div class="menu-info">
-            <h3>${item.name}</h3>
+            <h3>${displayName}</h3>
             <p class="menu-price">Rp ${formatPrice(item.price)}</p>
         </div>
         <div class="menu-actions">
@@ -475,7 +472,7 @@ function showPage(pageName) {
 function filterCategory(category) {
     // Track current category
     currentCategory = category;
-    
+
     // Update active tab
     document.querySelectorAll('.category-tab').forEach(tab => {
         tab.classList.remove('active');
@@ -562,25 +559,25 @@ function createCheckoutItemElement(item) {
 
 function updateCheckoutSummary() {
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
+
     // Calculate dynamic taxes
     let totalTaxes = 0;
     const taxCalculations = {};
-    
+
     taxData.forEach(tax => {
         const taxAmount = Math.round(subtotal * (tax.percentage / 100));
         taxCalculations[tax.name] = taxAmount;
         totalTaxes += taxAmount;
     });
-    
+
     const total = subtotal + totalTaxes;
 
     document.getElementById('subtotal').textContent = `Rp ${formatPrice(subtotal)}`;
-    
+
     // Dynamically create tax rows
     const taxRowsContainer = document.getElementById('taxRows');
     taxRowsContainer.innerHTML = '';
-    
+
     taxData.forEach(tax => {
         const taxRow = document.createElement('div');
         taxRow.className = 'summary-row';
@@ -590,7 +587,7 @@ function updateCheckoutSummary() {
         `;
         taxRowsContainer.appendChild(taxRow);
     });
-    
+
     document.getElementById('totalAmount').textContent = `Rp ${formatPrice(total)}`;
 }
 
@@ -632,17 +629,17 @@ async function processOrder() {
     // Calculate totals
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const serviceCharge = Math.round(subtotal * 0.1);
-    
+
     // Calculate dynamic taxes
     let totalTaxes = 0;
     const taxCalculations = {};
-    
+
     taxData.forEach(tax => {
         const taxAmount = Math.round(subtotal * (tax.percentage / 100));
         taxCalculations[tax.name] = taxAmount;
         totalTaxes += taxAmount;
     });
-    
+
     const totalBill = subtotal + serviceCharge + totalTaxes;
 
     // Prepare products array with error checking
@@ -681,7 +678,7 @@ async function processOrder() {
             sku_id: originalItem?.sku_id || item.id || 'unknown',
             name: item.name || 'Unknown Item',
             category: originalItem?.category || 'Lainnya',
-            variant: "",
+            variant: originalItem?.variant || "",
             modifiers_price: 0,
             modifiers_option: "",
             number_orders: item.quantity || 1,
@@ -786,13 +783,13 @@ function closeSuccessModal() {
     transactionNumber = 'TXN' + Date.now().toString().slice(-8);
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const serviceCharge = Math.round(subtotal * 0.1);
-    
+
     // Calculate dynamic taxes for order data
     let totalTaxes = 0;
     taxData.forEach(tax => {
         totalTaxes += Math.round(subtotal * (tax.percentage / 100));
     });
-    
+
     orderData = {
         items: [...cart],
         subtotal: subtotal,
@@ -837,13 +834,13 @@ function showOrderSummary() {
 function showPaymentPage() {
     const subtotal = orderData.subtotal;
     const serviceCharge = orderData.serviceCharge;
-    
+
     // Calculate dynamic taxes for payment page
     let totalTaxes = 0;
     taxData.forEach(tax => {
         totalTaxes += Math.round(subtotal * (tax.percentage / 100));
     });
-    
+
     const total = subtotal + serviceCharge + totalTaxes;
 
     document.getElementById('paymentSubtotal').textContent = `Rp ${formatPrice(subtotal)}`;
@@ -864,13 +861,13 @@ function selectPaymentMethod(method) {
 function closeBill() {
     const subtotal = orderData.subtotal;
     const serviceCharge = orderData.serviceCharge;
-    
+
     // Calculate dynamic taxes for final payment
     let totalTaxes = 0;
     taxData.forEach(tax => {
         totalTaxes += Math.round(subtotal * (tax.percentage / 100));
     });
-    
+
     const total = subtotal + serviceCharge + totalTaxes;
 
     document.getElementById('paymentDateTime').textContent = new Date().toLocaleString('id-ID');
