@@ -258,6 +258,9 @@ function createMenuItemElement(item) {
     const quantity = cartItem ? cartItem.quantity : 0;
     const displayName = item.variant ? `${item.name} - ${item.variant}` : item.name;
 
+    const div = document.createElement('div');
+    div.className = 'menu-item';
+
     div.innerHTML = `
         <img src="${item.image}" alt="${displayName}" class="menu-image">
         <div class="menu-info">
