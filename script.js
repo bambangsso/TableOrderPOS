@@ -211,66 +211,76 @@ async function fetchMenuData() {
                         groupedItems[itemName].allVariants.push(newVariant);
                     }
 
-                    // Create combined variant string
-                    const allVariants = groupedItems[itemName].allVariants.filter(v => v);
+                    // For complex variants with |, preserve them individually
+                    if (newVariant.includes('|')) {
+                        // Don't combine complex variants, keep the first one found or prefer the more complex one
+                        if (!groupedItems[itemName].variant.includes('|')) {
+                            groupedItems[itemName].variant = newVariant;
+                        }
+                    } else {
+                        // Create combined variant string for simple variants
+                        const allVariants = groupedItems[itemName].allVariants.filter(v => v && !v.includes('|'));
 
-                    if (allVariants.length > 1) {
-                        // Multiple variants - combine them intelligently
-                        const variantGroups = {};
+                        if (allVariants.length > 1) {
+                            // Multiple simple variants - combine them intelligently
+                            const variantGroups = {};
 
-                        allVariants.forEach(variant => {
-                            const parts = variant.split('|');
-                            const baseName = parts[0].trim();
-                            const options = parts.length > 1 ? parts[1].split(',').map(opt => opt.trim()) : [baseName];
+                            allVariants.forEach(variant => {
+                                const parts = variant.split('|');
+                                const baseName = parts[0].trim();
+                                const options = parts.length > 1 ? parts[1].split(',').map(opt => opt.trim()) : [baseName];
 
-                            if (!variantGroups[baseName]) {
-                                variantGroups[baseName] = new Set();
-                            }
+                                if (!variantGroups[baseName]) {
+                                    variantGroups[baseName] = new Set();
+                                }
 
-                            options.forEach(opt => {
-                                if (opt) variantGroups[baseName].add(opt);
+                                options.forEach(opt => {
+                                    if (opt) variantGroups[baseName].add(opt);
+                                });
                             });
-                        });
 
-                        // Build final variant string
-                        const baseNames = Object.keys(variantGroups);
-                        if (baseNames.length === 1) {
-                            // Same base variant, different options
-                            const baseName = baseNames[0];
-                            const allOptions = Array.from(variantGroups[baseName]);
+                            // Build final variant string
+                            const baseNames = Object.keys(variantGroups);
+                            if (baseNames.length === 1) {
+                                // Same base variant, different options
+                                const baseName = baseNames[0];
+                                const allOptions = Array.from(variantGroups[baseName]);
 
-                            if (allOptions.length > 1) {
-                                // Check if these are size variants (Small, Medium, Large, etc.)
-                                const sizeVariants = ['small', 'medium', 'large', 'xl', 'xxl', 's', 'm', 'l'];
-                                const isAllSizes = allOptions.every(opt => 
-                                    sizeVariants.includes(opt.toLowerCase()) || 
-                                    opt.toLowerCase().includes('size')
-                                );
+                                if (allOptions.length > 1) {
+                                    // Check if these are size variants (Small, Medium, Large, etc.)
+                                    const sizeVariants = ['small', 'medium', 'large', 'xl', 'xxl', 's', 'm', 'l'];
+                                    const isAllSizes = allOptions.every(opt => 
+                                        sizeVariants.includes(opt.toLowerCase()) || 
+                                        opt.toLowerCase().includes('size')
+                                    );
 
-                                if (isAllSizes) {
-                                    // For size variants, use "Size" as the base name
-                                    groupedItems[itemName].variant = `Size|${allOptions.join(', ')}`;
-                                } else if (!allOptions.includes(baseName)) {
-                                    // Use the base name if it's not already in the options
-                                    groupedItems[itemName].variant = `${baseName}|${allOptions.join(', ')}`;
+                                    if (isAllSizes) {
+                                        // For size variants, use "Size" as the base name
+                                        groupedItems[itemName].variant = `Size|${allOptions.join(', ')}`;
+                                    } else if (!allOptions.includes(baseName)) {
+                                        // Use the base name if it's not already in the options
+                                        groupedItems[itemName].variant = `${baseName}|${allOptions.join(', ')}`;
+                                    } else {
+                                        // Just list the options without a generic "Choose" prefix
+                                        groupedItems[itemName].variant = allOptions.join(', ');
+                                    }
                                 } else {
-                                    // Just list the options without a generic "Choose" prefix
-                                    groupedItems[itemName].variant = allOptions.join(', ');
+                                    groupedItems[itemName].variant = baseName;
                                 }
                             } else {
-                                groupedItems[itemName].variant = baseName;
-                            }
-                        } else {
-                            // Different base variants - combine all unique options
-                            const allUniqueOptions = new Set();
-                            Object.values(variantGroups).forEach(optionSet => {
-                                optionSet.forEach(opt => allUniqueOptions.add(opt));
-                            });
+                                // Different base variants - combine all unique options
+                                const allUniqueOptions = new Set();
+                                Object.values(variantGroups).forEach(optionSet => {
+                                    optionSet.forEach(opt => allUniqueOptions.add(opt));
+                                });
 
-                            groupedItems[itemName].variant = Array.from(allUniqueOptions).join(', ');
+                                groupedItems[itemName].variant = Array.from(allUniqueOptions).join(', ');
+                            }
+                        } else if (allVariants.length === 1) {
+                            if (!groupedItems[itemName].variant.includes('|')) {
+                                groupedItems[itemName].variant = allVariants[0];
+                            }
                         }
-                    } else if (allVariants.length === 1) {
-                        groupedItems[itemName].variant = allVariants[0];
                     }
                 }
             });
@@ -1007,6 +1017,8 @@ function resetApp() {
 
 // Variant selection functions
 function showVariantModal(item) {
+    console.log('showVariantModal called for item:', item);
+    
     const modal = document.getElementById('variantModal');
     const optionsContainer = document.getElementById('variantOptions');
 
@@ -1015,11 +1027,38 @@ function showVariantModal(item) {
 
     // Check if variant contains "|" character
     if (item.variant.includes('|')) {
+        console.log('Item has complex variant with |:', item.variant);
+        
         // Case 3: Variant contains "|" - e.g., "Ayam|Pedas,Tdk Pedas"
-        // Find all items with same name to get all variant combinations
-        const sameNameItems = menuData.filter(menuItem => 
-            menuItem.name === item.name && menuItem.variant.includes('|')
-        );
+        // Find all items with same name from the original filtered data
+        const sameNameItems = [];
+        
+        // Check current menuData
+        menuData.forEach(menuItem => {
+            if (menuItem.name === item.name) {
+                if (menuItem.variant.includes('|')) {
+                    sameNameItems.push(menuItem);
+                }
+                // Also check allVariants array if it exists
+                if (menuItem.allVariants && menuItem.allVariants.length > 0) {
+                    menuItem.allVariants.forEach(variant => {
+                        if (variant && variant.includes('|')) {
+                            sameNameItems.push({
+                                ...menuItem,
+                                variant: variant
+                            });
+                        }
+                    });
+                }
+            }
+        });
+
+        // Also parse the current item's variant directly
+        if (item.variant.includes('|')) {
+            sameNameItems.push(item);
+        }
+
+        console.log('Same name items with | variants:', sameNameItems);
 
         // Extract all main variants (before |) and options (after |)
         const mainVariants = new Set();
@@ -1033,6 +1072,9 @@ function showVariantModal(item) {
                 options.forEach(opt => optionsSet.add(opt));
             }
         });
+
+        console.log('Extracted main variants:', Array.from(mainVariants));
+        console.log('Extracted options:', Array.from(optionsSet));
 
         // Add main variant selection
         if (mainVariants.size > 0) {
