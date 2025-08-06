@@ -1076,13 +1076,13 @@ function showVariantModal(item) {
 
     } else {
         // Case 2: Variant doesn't contain "|" - show all variants of same item name
-        // Get all unique variants for this item name, including from allVariants array
+        // Get all unique variants for this item name, but exclude combined variant strings
         const allVariantsForItem = new Set();
 
         // Check if item has allVariants array (from grouping process)
         if (item.allVariants && item.allVariants.length > 0) {
             item.allVariants.forEach(variant => {
-                if (variant && variant.trim() && !variant.includes('|')) {
+                if (variant && variant.trim() && !variant.includes('|') && !variant.includes(',')) {
                     allVariantsForItem.add(variant.trim());
                 }
             });
@@ -1090,13 +1090,13 @@ function showVariantModal(item) {
 
         // Also check all menu items with same name
         menuData.forEach(menuItem => {
-            if (menuItem.name === item.name && menuItem.variant && menuItem.variant.trim() && !menuItem.variant.includes('|')) {
+            if (menuItem.name === item.name && menuItem.variant && menuItem.variant.trim() && !menuItem.variant.includes('|') && !menuItem.variant.includes(',')) {
                 allVariantsForItem.add(menuItem.variant.trim());
 
                 // Also check their allVariants if they have any
                 if (menuItem.allVariants && menuItem.allVariants.length > 0) {
                     menuItem.allVariants.forEach(variant => {
-                        if (variant && variant.trim() && !variant.includes('|')) {
+                        if (variant && variant.trim() && !variant.includes('|') && !variant.includes(',')) {
                             allVariantsForItem.add(variant.trim());
                         }
                     });
