@@ -163,10 +163,26 @@ async function fetchMenuData() {
 
         // Process the API response
         if (data && Array.isArray(data)) {
+            console.log('Total items received:', data.length);
+            
+            // Log all item names for debugging
+            console.log('All items from API:', data.map(item => ({
+                name: item.name,
+                category: item.category,
+                variant: item.variant
+            })));
+            
             // Filter out items with "bahan baku" category
             const filteredData = data.filter(item =>
                 item.category && item.category.toLowerCase() !== 'bahan baku'
             );
+            
+            console.log('Items after filtering out bahan baku:', filteredData.length);
+            console.log('Filtered items:', filteredData.map(item => ({
+                name: item.name,
+                category: item.category,
+                variant: item.variant
+            })));
 
             // Group items by name to handle variants properly
             const groupedItems = {};
