@@ -11,8 +11,8 @@ let taxData = [];
 let storeData = {};
 let selectedItemForVariant = null;
 let selectedVariantOption = null;
-let selectedProteinOption = null;
-let selectedSpiceOption = null;
+let selectedMainVariant = null;
+let selectedAdditionalOption = null;
 
 // Store API configuration (will be updated from URL parameters)
 let STORE_API_CONFIG = {
@@ -1016,36 +1016,71 @@ function showVariantModal(item) {
     // Check if variant contains "|" character
     if (item.variant.includes('|')) {
         // Case 3: Variant contains "|" - e.g., "Ayam|Pedas,Tdk Pedas"
-        const variantParts = item.variant.split('|');
-        const variantName = variantParts[0].trim();
-        const options = variantParts[1].split(',').map(opt => opt.trim()).filter(opt => opt);
+        // Find all items with same name to get all variant combinations
+        const sameNameItems = menuData.filter(menuItem => 
+            menuItem.name === item.name && menuItem.variant.includes('|')
+        );
         
-        // Add variant name header
-        const variantHeader = document.createElement('div');
-        variantHeader.innerHTML = `<h4 style="margin: 10px 0 5px 0; font-size: 0.9rem;">Varian: ${variantName}</h4>`;
-        optionsContainer.appendChild(variantHeader);
+        // Extract all main variants (before |) and options (after |)
+        const mainVariants = new Set();
+        const optionsSet = new Set();
         
-        // Add options header
-        const optionHeader = document.createElement('div');
-        optionHeader.innerHTML = `<h4 style="margin: 15px 0 5px 0; font-size: 0.9rem;">Option:</h4>`;
-        optionsContainer.appendChild(optionHeader);
-        
-        // Create radio buttons for options
-        options.forEach((option, index) => {
-            const optionDiv = document.createElement('div');
-            optionDiv.className = 'variant-option';
-            optionDiv.onclick = () => selectVariantOption(option, optionDiv);
-            
-            optionDiv.innerHTML = `
-                <input type="radio" name="variantOption" value="${option}" id="option_${index}">
-                <label for="option_${index}">${option}</label>
-            `;
-            
-            optionsContainer.appendChild(optionDiv);
+        sameNameItems.forEach(menuItem => {
+            const variantParts = menuItem.variant.split('|');
+            if (variantParts.length >= 2) {
+                mainVariants.add(variantParts[0].trim());
+                const options = variantParts[1].split(',').map(opt => opt.trim()).filter(opt => opt);
+                options.forEach(opt => optionsSet.add(opt));
+            }
         });
+        
+        // Add main variant selection
+        if (mainVariants.size > 0) {
+            const variantHeader = document.createElement('div');
+            variantHeader.innerHTML = `<h4 style="margin: 10px 0 5px 0; font-size: 0.9rem;">Varian:</h4>`;
+            optionsContainer.appendChild(variantHeader);
+            
+            Array.from(mainVariants).forEach((variant, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'variant-option';
+                optionDiv.onclick = () => selectMainVariant(variant, optionDiv);
+                
+                optionDiv.innerHTML = `
+                    <input type="radio" name="mainVariant" value="${variant}" id="main_variant_${index}">
+                    <label for="main_variant_${index}">${variant}</label>
+                `;
+                
+                optionsContainer.appendChild(optionDiv);
+            });
+        }
+        
+        // Add options selection
+        if (optionsSet.size > 0) {
+            const optionHeader = document.createElement('div');
+            optionHeader.innerHTML = `<h4 style="margin: 15px 0 5px 0; font-size: 0.9rem;">Option:</h4>`;
+            optionsContainer.appendChild(optionHeader);
+            
+            Array.from(optionsSet).forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'variant-option';
+                optionDiv.onclick = () => selectAdditionalOption(option, optionDiv);
+                
+                optionDiv.innerHTML = `
+                    <input type="radio" name="additionalOption" value="${option}" id="additional_option_${index}">
+                    <label for="additional_option_${index}">${option}</label>
+                `;
+                
+                optionsContainer.appendChild(optionDiv);
+            });
+        }
+        
     } else {
         // Case 2: Variant doesn't contain "|" - show all variants of same item name
-        const sameNameItems = menuData.filter(menuItem => menuItem.name === item.name && menuItem.variant.trim());
+        const sameNameItems = menuData.filter(menuItem => 
+            menuItem.name === item.name && 
+            menuItem.variant.trim() && 
+            !menuItem.variant.includes('|')
+        );
         
         if (sameNameItems.length > 0) {
             // Add varian header
@@ -1071,15 +1106,15 @@ function showVariantModal(item) {
     
     // Reset selection
     selectedVariantOption = null;
-    selectedProteinOption = null;
-    selectedSpiceOption = null;
+    selectedMainVariant = null;
+    selectedAdditionalOption = null;
     
     // Show modal
     modal.classList.add('active');
 }
 
 function selectVariantOption(option, optionElement) {
-    // Remove previous selection
+    // Remove previous selection for simple variants
     document.querySelectorAll('input[name="variantOption"]').forEach(input => {
         input.checked = false;
         input.closest('.variant-option').classList.remove('selected');
@@ -1091,19 +1126,63 @@ function selectVariantOption(option, optionElement) {
     selectedVariantOption = option;
 }
 
-function confirmVariantSelection() {
-    if (!selectedVariantOption) {
-        alert('Silakan pilih varian terlebih dahulu');
-        return;
-    }
+function selectMainVariant(variant, optionElement) {
+    // Remove previous selection for main variants
+    document.querySelectorAll('input[name="mainVariant"]').forEach(input => {
+        input.checked = false;
+        input.closest('.variant-option').classList.remove('selected');
+    });
     
+    // Select current variant
+    optionElement.classList.add('selected');
+    optionElement.querySelector('input').checked = true;
+    selectedMainVariant = variant;
+}
+
+function selectAdditionalOption(option, optionElement) {
+    // Remove previous selection for additional options
+    document.querySelectorAll('input[name="additionalOption"]').forEach(input => {
+        input.checked = false;
+        input.closest('.variant-option').classList.remove('selected');
+    });
+    
+    // Select current option
+    optionElement.classList.add('selected');
+    optionElement.querySelector('input').checked = true;
+    selectedAdditionalOption = option;
+}
+
+function confirmVariantSelection() {
     if (!selectedItemForVariant) {
         alert('Item tidak ditemukan');
         return;
     }
     
+    let variantNote = '';
+    
+    // Case 2: Simple variant (no |)
+    if (selectedVariantOption) {
+        variantNote = selectedVariantOption;
+    }
+    // Case 3: Complex variant (with |)
+    else if (selectedMainVariant || selectedAdditionalOption) {
+        if (!selectedMainVariant) {
+            alert('Silakan pilih varian terlebih dahulu');
+            return;
+        }
+        if (!selectedAdditionalOption) {
+            alert('Silakan pilih option terlebih dahulu');
+            return;
+        }
+        variantNote = `${selectedMainVariant}, ${selectedAdditionalOption}`;
+    }
+    else {
+        alert('Silakan pilih varian terlebih dahulu');
+        return;
+    }
+    
     // Add item to cart with selected variant as note
-    addItemToCart(selectedItemForVariant, selectedVariantOption);
+    addItemToCart(selectedItemForVariant, variantNote);
     
     // Close modal
     closeVariantModal();
@@ -1113,6 +1192,8 @@ function closeVariantModal() {
     document.getElementById('variantModal').classList.remove('active');
     selectedItemForVariant = null;
     selectedVariantOption = null;
+    selectedMainVariant = null;
+    selectedAdditionalOption = null;
 }
 
 // Utility functions
