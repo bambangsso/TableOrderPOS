@@ -13,8 +13,6 @@ let selectedItemForVariant = null;
 let selectedVariantOption = null;
 let selectedMainVariant = null;
 let selectedAdditionalOption = null;
-let isDataLoaded = false;
-let isLoadingData = false;
 
 // Store API configuration (will be updated from URL parameters)
 let STORE_API_CONFIG = {
@@ -68,10 +66,7 @@ async function fetchStoreData() {
                 API_CONFIG.payload.outlet_id = storeInfo.outlet_id;
 
                 // Update restaurant name in header
-                const restaurantNameElement = document.querySelector('.restaurant-name');
-                if (restaurantNameElement) {
-                    restaurantNameElement.textContent = storeInfo.nama;
-                }
+                document.querySelector('.restaurant-name').textContent = storeInfo.nama;
 
                 console.log('Processed store data:', storeData);
             } else {
@@ -150,15 +145,6 @@ async function fetchTaxData() {
 
 // Fetch menu data from API
 async function fetchMenuData() {
-    // Prevent duplicate fetching
-    if (menuData.length > 0) {
-        console.log('Menu data already loaded, skipping fetch but re-rendering menu');
-        // Still render the menu even if data is already loaded
-        renderCategoryTabs();
-        renderMenu();
-        return;
-    }
-
     try {
         const response = await fetch(API_CONFIG.url, {
             method: 'POST',
@@ -293,14 +279,6 @@ async function fetchMenuData() {
             console.log('Grouped items:', groupedItems);
             console.log('Final menu data:', menuData);
 
-            // Validate menu data
-            if (menuData.length === 0) {
-                console.warn('No menu items found after processing');
-                const menuContainer = document.getElementById('menuItems');
-                menuContainer.innerHTML = '<p style="text-align: center; padding: 2rem; color: #999;">No menu items available</p>';
-                return;
-            }
-
             // Extract unique categories (excluding bahan baku)
             const uniqueCategories = [...new Set(menuData.map(item => item.category))];
             categories = ['Semua', ...uniqueCategories];
@@ -310,9 +288,6 @@ async function fetchMenuData() {
 
             // Render menu
             renderMenu();
-
-            console.log(`Successfully rendered ${menuData.length} menu items`);
-            console.log(`Menu container HTML:`, document.getElementById('menuItems').innerHTML);
         } else {
             console.error('Invalid API response format');
             // Fallback to empty menu
@@ -347,94 +322,40 @@ function renderCategoryTabs() {
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', async function() {
-    // Prevent duplicate initialization
-    if (isDataLoaded || isLoadingData) {
-        console.log('Data already loaded or loading, skipping initialization');
-        // Still render the menu if data exists
-        if (menuData.length > 0) {
-            renderCategoryTabs();
-            renderMenu();
-        }
-        return;
-    }
+    // Get parameters from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    tableNumber = urlParams.get('table') || '1';
+    const restoName = urlParams.get('restoname') || 'bellevue-shopx';
 
-    isLoadingData = true;
+    // Update table number display
+    document.getElementById('tableNumber').textContent = tableNumber;
 
-    try {
-        // Get parameters from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        tableNumber = urlParams.get('table') || '1';
-        const restoName = urlParams.get('restoname') || 'bellevue-shopx';
+    // Update store API configuration with restaurant name from URL
+    STORE_API_CONFIG.payload.mini_website_url = `https://orderin.id/${restoName}`;
 
-        // Update table number display
-        document.getElementById('tableNumber').textContent = tableNumber;
+    console.log('URL Parameters:', { table: tableNumber, restoname: restoName });
+    console.log('Store API URL will be:', STORE_API_CONFIG.payload.mini_website_url);
 
-        // Update store API configuration with restaurant name from URL
-        STORE_API_CONFIG.payload.mini_website_url = `https://orderin.id/${restoName}`;
+    // Fetch store data first, then menu and tax data
+    await fetchStoreData();
+    await Promise.all([
+        fetchMenuData(),
+        fetchTaxData()
+    ]);
 
-        console.log('URL Parameters:', { table: tableNumber, restoname: restoName });
-        console.log('Store API URL will be:', STORE_API_CONFIG.payload.mini_website_url);
-
-        // Show loading message
-        const menuContainer = document.getElementById('menuItems');
-        menuContainer.innerHTML = '<p style="text-align: center; padding: 2rem; color: #999;">Loading menu...</p>';
-
-        // Fetch store data first, then menu and tax data
-        await fetchStoreData();
-        await Promise.all([
-            fetchMenuData(),
-            fetchTaxData()
-        ]);
-
-        isDataLoaded = true;
-        console.log('Data loading completed successfully');
-
-        // Set initial page
-        showPage('menu');
-    } catch (error) {
-        console.error('Error during initialization:', error);
-        const menuContainer = document.getElementById('menuItems');
-        menuContainer.innerHTML = '<p style="text-align: center; padding: 2rem; color: #f44;">Error loading menu. Please refresh the page.</p>';
-    } finally {
-        isLoadingData = false;
-    }
+    // Set initial page
+    showPage('menu');
 });
 
 // Menu functions
 function renderMenu(items = menuData) {
-    console.log('renderMenu called with items:', items?.length || 0);
-    
     const menuContainer = document.getElementById('menuItems');
-    
-    if (!menuContainer) {
-        console.error('Menu container not found');
-        return;
-    }
-
-    console.log('Menu container found:', menuContainer);
-
     menuContainer.innerHTML = '';
 
-    if (!items || items.length === 0) {
-        console.log('No items to render, showing no items message');
-        menuContainer.innerHTML = '<p style="text-align: center; padding: 2rem; color: #999;">No items to display</p>';
-        return;
-    }
-
-    console.log(`Rendering ${items.length} menu items`);
-    
-    items.forEach((item, index) => {
-        try {
-            console.log(`Creating element for item ${index}:`, item.name);
-            const menuItemElement = createMenuItemElement(item);
-            menuContainer.appendChild(menuItemElement);
-            console.log(`Added item ${index} to container`);
-        } catch (error) {
-            console.error(`Error creating menu item element for item ${index}:`, error, item);
-        }
+    items.forEach(item => {
+        const menuItemElement = createMenuItemElement(item);
+        menuContainer.appendChild(menuItemElement);
     });
-
-    console.log(`Finished rendering menu items. Container HTML length:`, menuContainer.innerHTML.length);
 }
 
 function createMenuItemElement(item) {
@@ -1086,10 +1007,6 @@ function resetApp() {
 
 // Variant selection functions
 function showVariantModal(item) {
-    console.log('showVariantModal called for item:', item);
-    console.log('Item variant:', item.variant);
-    console.log('Item allVariants:', item.allVariants);
-    
     const modal = document.getElementById('variantModal');
     const optionsContainer = document.getElementById('variantOptions');
 
@@ -1097,62 +1014,23 @@ function showVariantModal(item) {
     optionsContainer.innerHTML = '';
 
     // Check if variant contains "|" character
-    if (item.variant && item.variant.includes('|')) {
+    if (item.variant.includes('|')) {
         // Case 3: Variant contains "|" - e.g., "Ayam|Pedas,Tdk Pedas"
-        // Find all items with same name and also check allVariants array
-        const sameNameItems = menuData.filter(menuItem => menuItem.name === item.name);
-        
+        // Find all items with same name to get all variant combinations
+        const sameNameItems = menuData.filter(menuItem => 
+            menuItem.name === item.name && menuItem.variant.includes('|')
+        );
+
         // Extract all main variants (before |) and options (after |)
         const mainVariants = new Set();
         const optionsSet = new Set();
 
-        // Check the current item's variant
-        if (item.variant.includes('|')) {
-            const variantParts = item.variant.split('|');
+        sameNameItems.forEach(menuItem => {
+            const variantParts = menuItem.variant.split('|');
             if (variantParts.length >= 2) {
                 mainVariants.add(variantParts[0].trim());
                 const options = variantParts[1].split(',').map(opt => opt.trim()).filter(opt => opt);
                 options.forEach(opt => optionsSet.add(opt));
-            }
-        }
-
-        // Check allVariants array for additional variants with |
-        if (item.allVariants && item.allVariants.length > 0) {
-            item.allVariants.forEach(variant => {
-                if (variant && variant.includes('|')) {
-                    const variantParts = variant.split('|');
-                    if (variantParts.length >= 2) {
-                        mainVariants.add(variantParts[0].trim());
-                        const options = variantParts[1].split(',').map(opt => opt.trim()).filter(opt => opt);
-                        options.forEach(opt => optionsSet.add(opt));
-                    }
-                }
-            });
-        }
-
-        // Also check other items with same name
-        sameNameItems.forEach(menuItem => {
-            if (menuItem.variant && menuItem.variant.includes('|')) {
-                const variantParts = menuItem.variant.split('|');
-                if (variantParts.length >= 2) {
-                    mainVariants.add(variantParts[0].trim());
-                    const options = variantParts[1].split(',').map(opt => opt.trim()).filter(opt => opt);
-                    options.forEach(opt => optionsSet.add(opt));
-                }
-            }
-
-            // Check their allVariants too
-            if (menuItem.allVariants && menuItem.allVariants.length > 0) {
-                menuItem.allVariants.forEach(variant => {
-                    if (variant && variant.includes('|')) {
-                        const variantParts = variant.split('|');
-                        if (variantParts.length >= 2) {
-                            mainVariants.add(variantParts[0].trim());
-                            const options = variantParts[1].split(',').map(opt => opt.trim()).filter(opt => opt);
-                            options.forEach(opt => optionsSet.add(opt));
-                        }
-                    }
-                });
             }
         });
 
@@ -1248,29 +1126,6 @@ function showVariantModal(item) {
                 optionsContainer.appendChild(optionDiv);
             });
         }
-    } else if (item.variant && item.variant.trim()) {
-        // Case 4: Single variant - show it as an option
-        console.log('Single variant case:', item.variant);
-        
-        const variantHeader = document.createElement('div');
-        variantHeader.innerHTML = `<h4 style="margin: 10px 0 5px 0; font-size: 0.9rem;">Varian:</h4>`;
-        optionsContainer.appendChild(variantHeader);
-
-        const optionDiv = document.createElement('div');
-        optionDiv.className = 'variant-option';
-        optionDiv.onclick = () => selectVariantOption(item.variant, optionDiv);
-
-        optionDiv.innerHTML = `
-            <input type="radio" name="variantOption" value="${item.variant}" id="single_variant_0">
-            <label for="single_variant_0">${item.variant}</label>
-        `;
-
-        optionsContainer.appendChild(optionDiv);
-    } else {
-        // No variants found - should not happen if we reached this function
-        console.log('No variants found for item:', item.name);
-        alert('Tidak ada varian untuk item ini');
-        return;
     }
 
     // Reset selection
