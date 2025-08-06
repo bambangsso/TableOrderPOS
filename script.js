@@ -239,10 +239,24 @@ async function fetchMenuData() {
                             const baseName = baseNames[0];
                             const allOptions = Array.from(variantGroups[baseName]);
                             
-                            if (allOptions.length > 1 && !allOptions.includes(baseName)) {
-                                groupedItems[itemName].variant = `${baseName}|${allOptions.join(', ')}`;
-                            } else if (allOptions.length > 1) {
-                                groupedItems[itemName].variant = `Choose|${allOptions.join(', ')}`;
+                            if (allOptions.length > 1) {
+                                // Check if these are size variants (Small, Medium, Large, etc.)
+                                const sizeVariants = ['small', 'medium', 'large', 'xl', 'xxl', 's', 'm', 'l'];
+                                const isAllSizes = allOptions.every(opt => 
+                                    sizeVariants.includes(opt.toLowerCase()) || 
+                                    opt.toLowerCase().includes('size')
+                                );
+                                
+                                if (isAllSizes) {
+                                    // For size variants, use "Size" as the base name
+                                    groupedItems[itemName].variant = `Size|${allOptions.join(', ')}`;
+                                } else if (!allOptions.includes(baseName)) {
+                                    // Use the base name if it's not already in the options
+                                    groupedItems[itemName].variant = `${baseName}|${allOptions.join(', ')}`;
+                                } else {
+                                    // Just list the options without a generic "Choose" prefix
+                                    groupedItems[itemName].variant = allOptions.join(', ');
+                                }
                             } else {
                                 groupedItems[itemName].variant = baseName;
                             }
@@ -253,7 +267,7 @@ async function fetchMenuData() {
                                 optionSet.forEach(opt => allUniqueOptions.add(opt));
                             });
                             
-                            groupedItems[itemName].variant = `Choose|${Array.from(allUniqueOptions).join(', ')}`;
+                            groupedItems[itemName].variant = Array.from(allUniqueOptions).join(', ');
                         }
                     } else if (allVariants.length === 1) {
                         groupedItems[itemName].variant = allVariants[0];
