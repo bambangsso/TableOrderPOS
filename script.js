@@ -199,28 +199,64 @@ async function fetchMenuData() {
                         image: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/150',
                         sku_id: item.sku_id || item.id,
                         buy_cost: parseInt(item.buy_cost) || 0,
-                        variant: item.variant || ''
+                        variant: item.variant || '',
+                        allVariants: [item.variant || ''].filter(v => v) // Track all variants
                     };
                 } else {
                     // If item with same name exists, combine variants
-                    const existingVariant = groupedItems[itemName].variant;
                     const newVariant = item.variant || '';
                     
-                    if (existingVariant && newVariant && existingVariant !== newVariant) {
-                        // Combine variants - merge the options after |
-                        const existingParts = existingVariant.split('|');
-                        const newParts = newVariant.split('|');
+                    // Add new variant to allVariants if not already present
+                    if (newVariant && !groupedItems[itemName].allVariants.includes(newVariant)) {
+                        groupedItems[itemName].allVariants.push(newVariant);
+                    }
+                    
+                    // Create combined variant string
+                    const allVariants = groupedItems[itemName].allVariants.filter(v => v);
+                    
+                    if (allVariants.length > 1) {
+                        // Multiple variants - combine them intelligently
+                        const variantGroups = {};
                         
-                        const baseName = existingParts[0] || newParts[0];
-                        const existingOptions = existingParts.length > 1 ? existingParts[1].split(',').map(opt => opt.trim()) : [];
-                        const newOptions = newParts.length > 1 ? newParts[1].split(',').map(opt => opt.trim()) : [];
+                        allVariants.forEach(variant => {
+                            const parts = variant.split('|');
+                            const baseName = parts[0].trim();
+                            const options = parts.length > 1 ? parts[1].split(',').map(opt => opt.trim()) : [baseName];
+                            
+                            if (!variantGroups[baseName]) {
+                                variantGroups[baseName] = new Set();
+                            }
+                            
+                            options.forEach(opt => {
+                                if (opt) variantGroups[baseName].add(opt);
+                            });
+                        });
                         
-                        // Combine all unique options
-                        const allOptions = [...new Set([...existingOptions, ...newOptions])].filter(opt => opt);
-                        
-                        groupedItems[itemName].variant = allOptions.length > 0 ? `${baseName}|${allOptions.join(', ')}` : baseName;
-                    } else if (!existingVariant && newVariant) {
-                        groupedItems[itemName].variant = newVariant;
+                        // Build final variant string
+                        const baseNames = Object.keys(variantGroups);
+                        if (baseNames.length === 1) {
+                            // Same base variant, different options
+                            const baseName = baseNames[0];
+                            const allOptions = Array.from(variantGroups[baseName]);
+                            
+                            if (allOptions.length > 1 && !allOptions.includes(baseName)) {
+                                groupedItems[itemName].variant = `${baseName}|${allOptions.join(', ')}`;
+                            } else if (allOptions.length > 1) {
+                                groupedItems[itemName].variant = `Choose|${allOptions.join(', ')}`;
+                            } else {
+                                groupedItems[itemName].variant = baseName;
+                            }
+                        } else {
+                            // Different base variants - combine all unique options
+                            const allUniqueOptions = new Set();
+                            Object.values(variantGroups).forEach(optionSet => {
+                                optionSet.forEach(opt => allUniqueOptions.add(opt));
+                            });
+                            
+                            groupedItems[itemName].variant = `Choose|${Array.from(allUniqueOptions).join(', ')}`;
+                        }
+                    } else if (allVariants.length === 1) {
+                        groupedItems[itemName].variant = allVariants[0];
                     }
                 }
             });
