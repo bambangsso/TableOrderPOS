@@ -159,6 +159,7 @@ async function fetchMenuData() {
         }
 
         const data = await response.json();
+        console.log('Menu API response:', data);
 
         // Process the API response
         if (data && Array.isArray(data)) {
@@ -209,6 +210,8 @@ async function fetchMenuData() {
             });
 
             menuData = Object.values(groupedItems);
+            console.log('Grouped items:', groupedItems);
+            console.log('Final menu data:', menuData);
 
             // Extract unique categories (excluding bahan baku)
             const uniqueCategories = [...new Set(menuData.map(item => item.category))];
