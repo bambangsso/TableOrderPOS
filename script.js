@@ -11,6 +11,8 @@ let taxData = [];
 let storeData = {};
 let selectedItemForVariant = null;
 let selectedVariantOption = null;
+let selectedProteinOption = null;
+let selectedSpiceOption = null;
 
 // Store API configuration (will be updated from URL parameters)
 let STORE_API_CONFIG = {
@@ -165,16 +167,48 @@ async function fetchMenuData() {
                 item.category && item.category.toLowerCase() !== 'bahan baku'
             );
 
-            menuData = filteredData.map(item => ({
-                id: item.id || Math.random(),
-                name: item.name || 'No Name',
-                price: parseInt(item.sell_cost) || 0,
-                category: item.category || 'Lainnya',
-                image: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/150',
-                sku_id: item.sku_id || item.id,
-                buy_cost: parseInt(item.buy_cost) || 0,
-                variant: item.variant || ''
-            }));
+            // Group items by name to handle variants properly
+            const groupedItems = {};
+            
+            filteredData.forEach(item => {
+                const itemName = item.name || 'No Name';
+                
+                if (!groupedItems[itemName]) {
+                    groupedItems[itemName] = {
+                        id: item.id || Math.random(),
+                        name: itemName,
+                        price: parseInt(item.sell_cost) || 0,
+                        category: item.category || 'Lainnya',
+                        image: item.images && item.images.length > 0 ? item.images[0] : 'https://via.placeholder.com/150',
+                        sku_id: item.sku_id || item.id,
+                        buy_cost: parseInt(item.buy_cost) || 0,
+                        variant: item.variant || ''
+                    };
+                } else {
+                    // If item with same name exists, combine variants
+                    const existingVariant = groupedItems[itemName].variant;
+                    const newVariant = item.variant || '';
+                    
+                    if (existingVariant && newVariant && existingVariant !== newVariant) {
+                        // Combine variants - merge the options after |
+                        const existingParts = existingVariant.split('|');
+                        const newParts = newVariant.split('|');
+                        
+                        const baseName = existingParts[0] || newParts[0];
+                        const existingOptions = existingParts.length > 1 ? existingParts[1].split(',').map(opt => opt.trim()) : [];
+                        const newOptions = newParts.length > 1 ? newParts[1].split(',').map(opt => opt.trim()) : [];
+                        
+                        // Combine all unique options
+                        const allOptions = [...new Set([...existingOptions, ...newOptions])].filter(opt => opt);
+                        
+                        groupedItems[itemName].variant = allOptions.length > 0 ? `${baseName}|${allOptions.join(', ')}` : baseName;
+                    } else if (!existingVariant && newVariant) {
+                        groupedItems[itemName].variant = newVariant;
+                    }
+                }
+            });
+
+            menuData = Object.values(groupedItems);
 
             // Extract unique categories (excluding bahan baku)
             const uniqueCategories = [...new Set(menuData.map(item => item.category))];
@@ -929,51 +963,149 @@ function showVariantModal(item) {
     // Add additional options if they exist (text after |)
     if (variantParts.length > 1) {
         const optionsText = variantParts[1].trim();
-        const options = optionsText.split(',').map(opt => opt.trim()).filter(opt => opt);
+        const optionGroups = optionsText.split(',').map(opt => opt.trim()).filter(opt => opt);
         
-        // Create radio buttons for each additional option
-        options.forEach((option, index) => {
-            const optionDiv = document.createElement('div');
-            optionDiv.className = 'variant-option';
-            optionDiv.onclick = () => selectVariantOption(option, optionDiv);
-            
-            optionDiv.innerHTML = `
-                <input type="radio" name="variantOption" value="${option}" id="variant_${index + 1}">
-                <label for="variant_${index + 1}">${baseVariant} + ${option}</label>
-            `;
-            
-            optionsContainer.appendChild(optionDiv);
+        // Check if we have multiple groups (like protein and spice level)
+        // We'll create separate radio button groups for each logical group
+        const proteinOptions = [];
+        const spiceOptions = [];
+        
+        optionGroups.forEach(option => {
+            const lowerOption = option.toLowerCase();
+            if (lowerOption.includes('ayam') || lowerOption.includes('seafood') || lowerOption.includes('daging') || lowerOption.includes('ikan')) {
+                proteinOptions.push(option);
+            } else if (lowerOption.includes('pedas') || lowerOption.includes('tidak pedas') || lowerOption.includes('tdk pedas') || lowerOption.includes('mild') || lowerOption.includes('spicy')) {
+                spiceOptions.push(option);
+            } else {
+                // Default group for other options
+                proteinOptions.push(option);
+            }
         });
+        
+        // Create protein options group
+        if (proteinOptions.length > 0) {
+            const proteinGroupDiv = document.createElement('div');
+            proteinGroupDiv.innerHTML = '<h4 style="margin: 10px 0 5px 0; font-size: 0.9rem;">Pilih Jenis:</h4>';
+            optionsContainer.appendChild(proteinGroupDiv);
+            
+            proteinOptions.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'variant-option';
+                optionDiv.onclick = () => selectVariantOption(option, optionDiv, 'protein');
+                
+                optionDiv.innerHTML = `
+                    <input type="radio" name="proteinOption" value="${option}" id="protein_${index}">
+                    <label for="protein_${index}">${option}</label>
+                `;
+                
+                optionsContainer.appendChild(optionDiv);
+            });
+        }
+        
+        // Create spice options group
+        if (spiceOptions.length > 0) {
+            const spiceGroupDiv = document.createElement('div');
+            spiceGroupDiv.innerHTML = '<h4 style="margin: 15px 0 5px 0; font-size: 0.9rem;">Tingkat Pedas:</h4>';
+            optionsContainer.appendChild(spiceGroupDiv);
+            
+            spiceOptions.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'variant-option';
+                optionDiv.onclick = () => selectVariantOption(option, optionDiv, 'spice');
+                
+                optionDiv.innerHTML = `
+                    <input type="radio" name="spiceOption" value="${option}" id="spice_${index}">
+                    <label for="spice_${index}">${option}</label>
+                `;
+                
+                optionsContainer.appendChild(optionDiv);
+            });
+        }
+        
+        // If no protein or spice options detected, create simple list
+        if (proteinOptions.length === 0 && spiceOptions.length === 0) {
+            optionGroups.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'variant-option';
+                optionDiv.onclick = () => selectVariantOption(option, optionDiv);
+                
+                optionDiv.innerHTML = `
+                    <input type="radio" name="variantOption" value="${option}" id="variant_${index + 1}">
+                    <label for="variant_${index + 1}">${baseVariant} + ${option}</label>
+                `;
+                
+                optionsContainer.appendChild(optionDiv);
+            });
+        }
     }
     
     // Reset selection
     selectedVariantOption = null;
+    selectedProteinOption = null;
+    selectedSpiceOption = null;
     
     // Show modal
     modal.classList.add('active');
 }
 
-function selectVariantOption(option, optionElement) {
-    // Remove previous selection
-    document.querySelectorAll('.variant-option').forEach(opt => {
-        opt.classList.remove('selected');
-        opt.querySelector('input').checked = false;
-    });
-    
-    // Select current option
-    optionElement.classList.add('selected');
-    optionElement.querySelector('input').checked = true;
-    selectedVariantOption = option;
+function selectVariantOption(option, optionElement, group = 'variant') {
+    if (group === 'protein') {
+        // Remove previous protein selection
+        document.querySelectorAll('input[name="proteinOption"]').forEach(input => {
+            input.checked = false;
+            input.closest('.variant-option').classList.remove('selected');
+        });
+        
+        // Select current protein option
+        optionElement.classList.add('selected');
+        optionElement.querySelector('input').checked = true;
+        selectedProteinOption = option;
+    } else if (group === 'spice') {
+        // Remove previous spice selection
+        document.querySelectorAll('input[name="spiceOption"]').forEach(input => {
+            input.checked = false;
+            input.closest('.variant-option').classList.remove('selected');
+        });
+        
+        // Select current spice option
+        optionElement.classList.add('selected');
+        optionElement.querySelector('input').checked = true;
+        selectedSpiceOption = option;
+    } else {
+        // Remove previous selection for simple variant
+        document.querySelectorAll('input[name="variantOption"]').forEach(input => {
+            input.checked = false;
+            input.closest('.variant-option').classList.remove('selected');
+        });
+        
+        // Select current option
+        optionElement.classList.add('selected');
+        optionElement.querySelector('input').checked = true;
+        selectedVariantOption = option;
+    }
 }
 
 function confirmVariantSelection() {
-    if (!selectedVariantOption || !selectedItemForVariant) {
-        alert('Silakan pilih varian terlebih dahulu');
+    let finalVariantNote = '';
+    
+    // Check if we have protein and spice options (multiple groups)
+    if (selectedProteinOption !== null || selectedSpiceOption !== null) {
+        const notes = [];
+        if (selectedProteinOption) notes.push(selectedProteinOption);
+        if (selectedSpiceOption) notes.push(selectedSpiceOption);
+        finalVariantNote = notes.join(', ');
+    } else if (selectedVariantOption !== null) {
+        // Simple single variant selection
+        finalVariantNote = selectedVariantOption;
+    }
+    
+    if (!selectedItemForVariant) {
+        alert('Item tidak ditemukan');
         return;
     }
     
     // Add item to cart with selected variant as note
-    addItemToCart(selectedItemForVariant, selectedVariantOption);
+    addItemToCart(selectedItemForVariant, finalVariantNote);
     
     // Close modal
     closeVariantModal();
@@ -983,6 +1115,8 @@ function closeVariantModal() {
     document.getElementById('variantModal').classList.remove('active');
     selectedItemForVariant = null;
     selectedVariantOption = null;
+    selectedProteinOption = null;
+    selectedSpiceOption = null;
 }
 
 // Utility functions
