@@ -149,7 +149,10 @@ async function fetchTaxData() {
 async function fetchMenuData() {
     // Prevent duplicate fetching
     if (menuData.length > 0) {
-        console.log('Menu data already loaded, skipping fetch');
+        console.log('Menu data already loaded, skipping fetch but re-rendering menu');
+        // Still render the menu even if data is already loaded
+        renderCategoryTabs();
+        renderMenu();
         return;
     }
 
@@ -343,6 +346,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Prevent duplicate initialization
     if (isDataLoaded || isLoadingData) {
         console.log('Data already loaded or loading, skipping initialization');
+        // Still render the menu if data exists
+        if (menuData.length > 0) {
+            renderCategoryTabs();
+            renderMenu();
+        }
         return;
     }
 
