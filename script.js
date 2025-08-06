@@ -1016,21 +1016,60 @@ function showVariantModal(item) {
     // Check if variant contains "|" character
     if (item.variant.includes('|')) {
         // Case 3: Variant contains "|" - e.g., "Ayam|Pedas,Tdk Pedas"
-        // Find all items with same name to get all variant combinations
-        const sameNameItems = menuData.filter(menuItem => 
-            menuItem.name === item.name && menuItem.variant.includes('|')
-        );
-
+        // Find all items with same name and also check allVariants array
+        const sameNameItems = menuData.filter(menuItem => menuItem.name === item.name);
+        
         // Extract all main variants (before |) and options (after |)
         const mainVariants = new Set();
         const optionsSet = new Set();
 
-        sameNameItems.forEach(menuItem => {
-            const variantParts = menuItem.variant.split('|');
+        // Check the current item's variant
+        if (item.variant.includes('|')) {
+            const variantParts = item.variant.split('|');
             if (variantParts.length >= 2) {
                 mainVariants.add(variantParts[0].trim());
                 const options = variantParts[1].split(',').map(opt => opt.trim()).filter(opt => opt);
                 options.forEach(opt => optionsSet.add(opt));
+            }
+        }
+
+        // Check allVariants array for additional variants with |
+        if (item.allVariants && item.allVariants.length > 0) {
+            item.allVariants.forEach(variant => {
+                if (variant && variant.includes('|')) {
+                    const variantParts = variant.split('|');
+                    if (variantParts.length >= 2) {
+                        mainVariants.add(variantParts[0].trim());
+                        const options = variantParts[1].split(',').map(opt => opt.trim()).filter(opt => opt);
+                        options.forEach(opt => optionsSet.add(opt));
+                    }
+                }
+            });
+        }
+
+        // Also check other items with same name
+        sameNameItems.forEach(menuItem => {
+            if (menuItem.variant && menuItem.variant.includes('|')) {
+                const variantParts = menuItem.variant.split('|');
+                if (variantParts.length >= 2) {
+                    mainVariants.add(variantParts[0].trim());
+                    const options = variantParts[1].split(',').map(opt => opt.trim()).filter(opt => opt);
+                    options.forEach(opt => optionsSet.add(opt));
+                }
+            }
+
+            // Check their allVariants too
+            if (menuItem.allVariants && menuItem.allVariants.length > 0) {
+                menuItem.allVariants.forEach(variant => {
+                    if (variant && variant.includes('|')) {
+                        const variantParts = variant.split('|');
+                        if (variantParts.length >= 2) {
+                            mainVariants.add(variantParts[0].trim());
+                            const options = variantParts[1].split(',').map(opt => opt.trim()).filter(opt => opt);
+                            options.forEach(opt => optionsSet.add(opt));
+                        }
+                    }
+                });
             }
         });
 
