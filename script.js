@@ -1007,6 +1007,10 @@ function resetApp() {
 
 // Variant selection functions
 function showVariantModal(item) {
+    console.log('showVariantModal called for item:', item);
+    console.log('Item variant:', item.variant);
+    console.log('Item allVariants:', item.allVariants);
+    
     const modal = document.getElementById('variantModal');
     const optionsContainer = document.getElementById('variantOptions');
 
@@ -1014,7 +1018,7 @@ function showVariantModal(item) {
     optionsContainer.innerHTML = '';
 
     // Check if variant contains "|" character
-    if (item.variant.includes('|')) {
+    if (item.variant && item.variant.includes('|')) {
         // Case 3: Variant contains "|" - e.g., "Ayam|Pedas,Tdk Pedas"
         // Find all items with same name and also check allVariants array
         const sameNameItems = menuData.filter(menuItem => menuItem.name === item.name);
@@ -1165,6 +1169,29 @@ function showVariantModal(item) {
                 optionsContainer.appendChild(optionDiv);
             });
         }
+    } else if (item.variant && item.variant.trim()) {
+        // Case 4: Single variant - show it as an option
+        console.log('Single variant case:', item.variant);
+        
+        const variantHeader = document.createElement('div');
+        variantHeader.innerHTML = `<h4 style="margin: 10px 0 5px 0; font-size: 0.9rem;">Varian:</h4>`;
+        optionsContainer.appendChild(variantHeader);
+
+        const optionDiv = document.createElement('div');
+        optionDiv.className = 'variant-option';
+        optionDiv.onclick = () => selectVariantOption(item.variant, optionDiv);
+
+        optionDiv.innerHTML = `
+            <input type="radio" name="variantOption" value="${item.variant}" id="single_variant_0">
+            <label for="single_variant_0">${item.variant}</label>
+        `;
+
+        optionsContainer.appendChild(optionDiv);
+    } else {
+        // No variants found - should not happen if we reached this function
+        console.log('No variants found for item:', item.name);
+        alert('Tidak ada varian untuk item ini');
+        return;
     }
 
     // Reset selection
