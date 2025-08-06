@@ -164,19 +164,19 @@ async function fetchMenuData() {
         // Process the API response
         if (data && Array.isArray(data)) {
             console.log('Total items received:', data.length);
-            
+
             // Log all item names for debugging
             console.log('All items from API:', data.map(item => ({
                 name: item.name,
                 category: item.category,
                 variant: item.variant
             })));
-            
+
             // Filter out items with "bahan baku" category
             const filteredData = data.filter(item =>
                 item.category && item.category.toLowerCase() !== 'bahan baku'
             );
-            
+
             console.log('Items after filtering out bahan baku:', filteredData.length);
             console.log('Filtered items:', filteredData.map(item => ({
                 name: item.name,
@@ -186,10 +186,10 @@ async function fetchMenuData() {
 
             // Group items by name to handle variants properly
             const groupedItems = {};
-            
+
             filteredData.forEach(item => {
                 const itemName = item.name || 'No Name';
-                
+
                 if (!groupedItems[itemName]) {
                     groupedItems[itemName] = {
                         id: item.id || Math.random(),
@@ -205,40 +205,40 @@ async function fetchMenuData() {
                 } else {
                     // If item with same name exists, combine variants
                     const newVariant = item.variant || '';
-                    
+
                     // Add new variant to allVariants if not already present
                     if (newVariant && !groupedItems[itemName].allVariants.includes(newVariant)) {
                         groupedItems[itemName].allVariants.push(newVariant);
                     }
-                    
+
                     // Create combined variant string
                     const allVariants = groupedItems[itemName].allVariants.filter(v => v);
-                    
+
                     if (allVariants.length > 1) {
                         // Multiple variants - combine them intelligently
                         const variantGroups = {};
-                        
+
                         allVariants.forEach(variant => {
                             const parts = variant.split('|');
                             const baseName = parts[0].trim();
                             const options = parts.length > 1 ? parts[1].split(',').map(opt => opt.trim()) : [baseName];
-                            
+
                             if (!variantGroups[baseName]) {
                                 variantGroups[baseName] = new Set();
                             }
-                            
+
                             options.forEach(opt => {
                                 if (opt) variantGroups[baseName].add(opt);
                             });
                         });
-                        
+
                         // Build final variant string
                         const baseNames = Object.keys(variantGroups);
                         if (baseNames.length === 1) {
                             // Same base variant, different options
                             const baseName = baseNames[0];
                             const allOptions = Array.from(variantGroups[baseName]);
-                            
+
                             if (allOptions.length > 1) {
                                 // Check if these are size variants (Small, Medium, Large, etc.)
                                 const sizeVariants = ['small', 'medium', 'large', 'xl', 'xxl', 's', 'm', 'l'];
@@ -246,7 +246,7 @@ async function fetchMenuData() {
                                     sizeVariants.includes(opt.toLowerCase()) || 
                                     opt.toLowerCase().includes('size')
                                 );
-                                
+
                                 if (isAllSizes) {
                                     // For size variants, use "Size" as the base name
                                     groupedItems[itemName].variant = `Size|${allOptions.join(', ')}`;
@@ -266,7 +266,7 @@ async function fetchMenuData() {
                             Object.values(variantGroups).forEach(optionSet => {
                                 optionSet.forEach(opt => allUniqueOptions.add(opt));
                             });
-                            
+
                             groupedItems[itemName].variant = Array.from(allUniqueOptions).join(', ');
                         }
                     } else if (allVariants.length === 1) {
@@ -362,7 +362,7 @@ function createMenuItemElement(item) {
     // Calculate total quantity for this item (considering all variant notes)
     const cartItems = cart.filter(c => c.id == item.id);
     const quantity = cartItems.reduce((sum, c) => sum + c.quantity, 0);
-    
+
     const div = document.createElement('div');
     div.className = 'menu-item';
 
@@ -1009,10 +1009,10 @@ function resetApp() {
 function showVariantModal(item) {
     const modal = document.getElementById('variantModal');
     const optionsContainer = document.getElementById('variantOptions');
-    
+
     // Clear previous options
     optionsContainer.innerHTML = '';
-    
+
     // Check if variant contains "|" character
     if (item.variant.includes('|')) {
         // Case 3: Variant contains "|" - e.g., "Ayam|Pedas,Tdk Pedas"
@@ -1020,11 +1020,11 @@ function showVariantModal(item) {
         const sameNameItems = menuData.filter(menuItem => 
             menuItem.name === item.name && menuItem.variant.includes('|')
         );
-        
+
         // Extract all main variants (before |) and options (after |)
         const mainVariants = new Set();
         const optionsSet = new Set();
-        
+
         sameNameItems.forEach(menuItem => {
             const variantParts = menuItem.variant.split('|');
             if (variantParts.length >= 2) {
@@ -1033,82 +1033,106 @@ function showVariantModal(item) {
                 options.forEach(opt => optionsSet.add(opt));
             }
         });
-        
+
         // Add main variant selection
         if (mainVariants.size > 0) {
             const variantHeader = document.createElement('div');
             variantHeader.innerHTML = `<h4 style="margin: 10px 0 5px 0; font-size: 0.9rem;">Varian:</h4>`;
             optionsContainer.appendChild(variantHeader);
-            
+
             Array.from(mainVariants).forEach((variant, index) => {
                 const optionDiv = document.createElement('div');
                 optionDiv.className = 'variant-option';
                 optionDiv.onclick = () => selectMainVariant(variant, optionDiv);
-                
+
                 optionDiv.innerHTML = `
                     <input type="radio" name="mainVariant" value="${variant}" id="main_variant_${index}">
                     <label for="main_variant_${index}">${variant}</label>
                 `;
-                
+
                 optionsContainer.appendChild(optionDiv);
             });
         }
-        
+
         // Add options selection
         if (optionsSet.size > 0) {
             const optionHeader = document.createElement('div');
             optionHeader.innerHTML = `<h4 style="margin: 15px 0 5px 0; font-size: 0.9rem;">Option:</h4>`;
             optionsContainer.appendChild(optionHeader);
-            
+
             Array.from(optionsSet).forEach((option, index) => {
                 const optionDiv = document.createElement('div');
                 optionDiv.className = 'variant-option';
                 optionDiv.onclick = () => selectAdditionalOption(option, optionDiv);
-                
+
                 optionDiv.innerHTML = `
                     <input type="radio" name="additionalOption" value="${option}" id="additional_option_${index}">
                     <label for="additional_option_${index}">${option}</label>
                 `;
-                
+
                 optionsContainer.appendChild(optionDiv);
             });
         }
-        
+
     } else {
         // Case 2: Variant doesn't contain "|" - show all variants of same item name
-        const sameNameItems = menuData.filter(menuItem => 
-            menuItem.name === item.name && 
-            menuItem.variant.trim() && 
-            !menuItem.variant.includes('|')
-        );
-        
-        if (sameNameItems.length > 0) {
+        // Get all unique variants for this item name, including from allVariants array
+        const allVariantsForItem = new Set();
+
+        // Check if item has allVariants array (from grouping process)
+        if (item.allVariants && item.allVariants.length > 0) {
+            item.allVariants.forEach(variant => {
+                if (variant && variant.trim() && !variant.includes('|')) {
+                    allVariantsForItem.add(variant.trim());
+                }
+            });
+        }
+
+        // Also check all menu items with same name
+        menuData.forEach(menuItem => {
+            if (menuItem.name === item.name && menuItem.variant && menuItem.variant.trim() && !menuItem.variant.includes('|')) {
+                allVariantsForItem.add(menuItem.variant.trim());
+
+                // Also check their allVariants if they have any
+                if (menuItem.allVariants && menuItem.allVariants.length > 0) {
+                    menuItem.allVariants.forEach(variant => {
+                        if (variant && variant.trim() && !variant.includes('|')) {
+                            allVariantsForItem.add(variant.trim());
+                        }
+                    });
+                }
+            }
+        });
+
+        console.log(`Variants found for ${item.name}:`, Array.from(allVariantsForItem));
+
+        if (allVariantsForItem.size > 0) {
             // Add varian header
             const variantHeader = document.createElement('div');
             variantHeader.innerHTML = `<h4 style="margin: 10px 0 5px 0; font-size: 0.9rem;">Varian:</h4>`;
             optionsContainer.appendChild(variantHeader);
-            
+
             // Create radio buttons for each variant
-            sameNameItems.forEach((variantItem, index) => {
+            Array.from(allVariantsForItem).forEach((variant, index) => {
                 const optionDiv = document.createElement('div');
                 optionDiv.className = 'variant-option';
-                optionDiv.onclick = () => selectVariantOption(variantItem.variant, optionDiv);
-                
+                optionDiv.onclick = () => selectVariantOption(variant, optionDiv);
+
                 optionDiv.innerHTML = `
-                    <input type="radio" name="variantOption" value="${variantItem.variant}" id="variant_${index}">
-                    <label for="variant_${index}">${variantItem.variant}</label>
+                    <input type="radio" name="variantOption" value="${variant}" id="variant_${index}">
+                    <label for="variant_${index}">${variant}</label>
                 `;
-                
+
                 optionsContainer.appendChild(optionDiv);
             });
         }
     }
-    
+
     // Reset selection
     selectedVariantOption = null;
     selectedMainVariant = null;
     selectedAdditionalOption = null;
-    
+
     // Show modal
     modal.classList.add('active');
 }
@@ -1119,7 +1143,7 @@ function selectVariantOption(option, optionElement) {
         input.checked = false;
         input.closest('.variant-option').classList.remove('selected');
     });
-    
+
     // Select current option
     optionElement.classList.add('selected');
     optionElement.querySelector('input').checked = true;
@@ -1132,7 +1156,7 @@ function selectMainVariant(variant, optionElement) {
         input.checked = false;
         input.closest('.variant-option').classList.remove('selected');
     });
-    
+
     // Select current variant
     optionElement.classList.add('selected');
     optionElement.querySelector('input').checked = true;
@@ -1145,7 +1169,7 @@ function selectAdditionalOption(option, optionElement) {
         input.checked = false;
         input.closest('.variant-option').classList.remove('selected');
     });
-    
+
     // Select current option
     optionElement.classList.add('selected');
     optionElement.querySelector('input').checked = true;
@@ -1157,9 +1181,9 @@ function confirmVariantSelection() {
         alert('Item tidak ditemukan');
         return;
     }
-    
+
     let variantNote = '';
-    
+
     // Case 2: Simple variant (no |)
     if (selectedVariantOption) {
         variantNote = selectedVariantOption;
@@ -1180,10 +1204,10 @@ function confirmVariantSelection() {
         alert('Silakan pilih varian terlebih dahulu');
         return;
     }
-    
+
     // Add item to cart with selected variant as note
     addItemToCart(selectedItemForVariant, variantNote);
-    
+
     // Close modal
     closeVariantModal();
 }
