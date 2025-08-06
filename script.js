@@ -13,6 +13,8 @@ let selectedItemForVariant = null;
 let selectedVariantOption = null;
 let selectedMainVariant = null;
 let selectedAdditionalOption = null;
+let isDataLoaded = false;
+let isLoadingData = false;
 
 // Store API configuration (will be updated from URL parameters)
 let STORE_API_CONFIG = {
@@ -145,6 +147,12 @@ async function fetchTaxData() {
 
 // Fetch menu data from API
 async function fetchMenuData() {
+    // Prevent duplicate fetching
+    if (menuData.length > 0) {
+        console.log('Menu data already loaded, skipping fetch');
+        return;
+    }
+
     try {
         const response = await fetch(API_CONFIG.url, {
             method: 'POST',
@@ -279,6 +287,14 @@ async function fetchMenuData() {
             console.log('Grouped items:', groupedItems);
             console.log('Final menu data:', menuData);
 
+            // Validate menu data
+            if (menuData.length === 0) {
+                console.warn('No menu items found after processing');
+                const menuContainer = document.getElementById('menuItems');
+                menuContainer.innerHTML = '<p style="text-align: center; padding: 2rem; color: #999;">No menu items available</p>';
+                return;
+            }
+
             // Extract unique categories (excluding bahan baku)
             const uniqueCategories = [...new Set(menuData.map(item => item.category))];
             categories = ['Semua', ...uniqueCategories];
@@ -288,6 +304,8 @@ async function fetchMenuData() {
 
             // Render menu
             renderMenu();
+
+            console.log(`Successfully rendered ${menuData.length} menu items`);
         } else {
             console.error('Invalid API response format');
             // Fallback to empty menu
@@ -322,40 +340,82 @@ function renderCategoryTabs() {
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', async function() {
-    // Get parameters from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    tableNumber = urlParams.get('table') || '1';
-    const restoName = urlParams.get('restoname') || 'bellevue-shopx';
+    // Prevent duplicate initialization
+    if (isDataLoaded || isLoadingData) {
+        console.log('Data already loaded or loading, skipping initialization');
+        return;
+    }
 
-    // Update table number display
-    document.getElementById('tableNumber').textContent = tableNumber;
+    isLoadingData = true;
 
-    // Update store API configuration with restaurant name from URL
-    STORE_API_CONFIG.payload.mini_website_url = `https://orderin.id/${restoName}`;
+    try {
+        // Get parameters from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        tableNumber = urlParams.get('table') || '1';
+        const restoName = urlParams.get('restoname') || 'bellevue-shopx';
 
-    console.log('URL Parameters:', { table: tableNumber, restoname: restoName });
-    console.log('Store API URL will be:', STORE_API_CONFIG.payload.mini_website_url);
+        // Update table number display
+        document.getElementById('tableNumber').textContent = tableNumber;
 
-    // Fetch store data first, then menu and tax data
-    await fetchStoreData();
-    await Promise.all([
-        fetchMenuData(),
-        fetchTaxData()
-    ]);
+        // Update store API configuration with restaurant name from URL
+        STORE_API_CONFIG.payload.mini_website_url = `https://orderin.id/${restoName}`;
 
-    // Set initial page
-    showPage('menu');
+        console.log('URL Parameters:', { table: tableNumber, restoname: restoName });
+        console.log('Store API URL will be:', STORE_API_CONFIG.payload.mini_website_url);
+
+        // Show loading message
+        const menuContainer = document.getElementById('menuItems');
+        menuContainer.innerHTML = '<p style="text-align: center; padding: 2rem; color: #999;">Loading menu...</p>';
+
+        // Fetch store data first, then menu and tax data
+        await fetchStoreData();
+        await Promise.all([
+            fetchMenuData(),
+            fetchTaxData()
+        ]);
+
+        isDataLoaded = true;
+        console.log('Data loading completed successfully');
+
+        // Set initial page
+        showPage('menu');
+    } catch (error) {
+        console.error('Error during initialization:', error);
+        const menuContainer = document.getElementById('menuItems');
+        menuContainer.innerHTML = '<p style="text-align: center; padding: 2rem; color: #f44;">Error loading menu. Please refresh the page.</p>';
+    } finally {
+        isLoadingData = false;
+    }
 });
 
 // Menu functions
 function renderMenu(items = menuData) {
     const menuContainer = document.getElementById('menuItems');
+    
+    if (!menuContainer) {
+        console.error('Menu container not found');
+        return;
+    }
+
     menuContainer.innerHTML = '';
 
-    items.forEach(item => {
-        const menuItemElement = createMenuItemElement(item);
-        menuContainer.appendChild(menuItemElement);
+    if (!items || items.length === 0) {
+        menuContainer.innerHTML = '<p style="text-align: center; padding: 2rem; color: #999;">No items to display</p>';
+        return;
+    }
+
+    console.log(`Rendering ${items.length} menu items`);
+    
+    items.forEach((item, index) => {
+        try {
+            const menuItemElement = createMenuItemElement(item);
+            menuContainer.appendChild(menuItemElement);
+        } catch (error) {
+            console.error(`Error creating menu item element for item ${index}:`, error, item);
+        }
     });
+
+    console.log(`Finished rendering menu items`);
 }
 
 function createMenuItemElement(item) {
