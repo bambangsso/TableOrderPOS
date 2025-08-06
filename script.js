@@ -259,16 +259,14 @@ function createMenuItemElement(item) {
     // Calculate total quantity for this item (considering all variant notes)
     const cartItems = cart.filter(c => c.id == item.id);
     const quantity = cartItems.reduce((sum, c) => sum + c.quantity, 0);
-    const variantText = item.variant ? item.variant.split('|')[0].trim() : '';
-    const displayName = variantText ? `${item.name} - ${variantText}` : item.name;
-
+    
     const div = document.createElement('div');
     div.className = 'menu-item';
 
     div.innerHTML = `
-        <img src="${item.image}" alt="${displayName}" class="menu-image">
+        <img src="${item.image}" alt="${item.name}" class="menu-image">
         <div class="menu-info">
-            <h3>${displayName}</h3>
+            <h3>${item.name}</h3>
             <p class="menu-price">Rp ${formatPrice(item.price)}</p>
         </div>
         <div class="menu-actions">
@@ -294,18 +292,15 @@ function addToCart(itemId) {
         return;
     }
 
-    // Check if item has variant options (contains | in variant)
-    if (item.variant && item.variant.includes('|')) {
-        const variantParts = item.variant.split('|');
-        if (variantParts.length > 1 && variantParts[1].trim()) {
-            // Show variant selection modal
-            selectedItemForVariant = item;
-            showVariantModal(item);
-            return;
-        }
+    // Check if item has variant
+    if (item.variant && item.variant.trim()) {
+        // Show variant selection modal for any item with variant
+        selectedItemForVariant = item;
+        showVariantModal(item);
+        return;
     }
 
-    // No variants or no options after |, add directly to cart
+    // No variants, add directly to cart
     addItemToCart(item, '');
 }
 
@@ -916,21 +911,35 @@ function showVariantModal(item) {
     // Clear previous options
     optionsContainer.innerHTML = '';
     
-    // Get variant options (text after |)
     const variantParts = item.variant.split('|');
+    const baseVariant = variantParts[0].trim();
+    
+    // Always add base variant as first option
+    const baseOptionDiv = document.createElement('div');
+    baseOptionDiv.className = 'variant-option';
+    baseOptionDiv.onclick = () => selectVariantOption('', baseOptionDiv);
+    
+    baseOptionDiv.innerHTML = `
+        <input type="radio" name="variantOption" value="" id="variant_base">
+        <label for="variant_base">${baseVariant}</label>
+    `;
+    
+    optionsContainer.appendChild(baseOptionDiv);
+    
+    // Add additional options if they exist (text after |)
     if (variantParts.length > 1) {
         const optionsText = variantParts[1].trim();
         const options = optionsText.split(',').map(opt => opt.trim()).filter(opt => opt);
         
-        // Create radio buttons for each option
+        // Create radio buttons for each additional option
         options.forEach((option, index) => {
             const optionDiv = document.createElement('div');
             optionDiv.className = 'variant-option';
             optionDiv.onclick = () => selectVariantOption(option, optionDiv);
             
             optionDiv.innerHTML = `
-                <input type="radio" name="variantOption" value="${option}" id="variant_${index}">
-                <label for="variant_${index}">${option}</label>
+                <input type="radio" name="variantOption" value="${option}" id="variant_${index + 1}">
+                <label for="variant_${index + 1}">${baseVariant} + ${option}</label>
             `;
             
             optionsContainer.appendChild(optionDiv);
