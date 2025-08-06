@@ -68,7 +68,10 @@ async function fetchStoreData() {
                 API_CONFIG.payload.outlet_id = storeInfo.outlet_id;
 
                 // Update restaurant name in header
-                document.querySelector('.restaurant-name').textContent = storeInfo.nama;
+                const restaurantNameElement = document.querySelector('.restaurant-name');
+                if (restaurantNameElement) {
+                    restaurantNameElement.textContent = storeInfo.nama;
+                }
 
                 console.log('Processed store data:', storeData);
             } else {
@@ -309,6 +312,7 @@ async function fetchMenuData() {
             renderMenu();
 
             console.log(`Successfully rendered ${menuData.length} menu items`);
+            console.log(`Menu container HTML:`, document.getElementById('menuItems').innerHTML);
         } else {
             console.error('Invalid API response format');
             // Fallback to empty menu
@@ -398,6 +402,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // Menu functions
 function renderMenu(items = menuData) {
+    console.log('renderMenu called with items:', items?.length || 0);
+    
     const menuContainer = document.getElementById('menuItems');
     
     if (!menuContainer) {
@@ -405,9 +411,12 @@ function renderMenu(items = menuData) {
         return;
     }
 
+    console.log('Menu container found:', menuContainer);
+
     menuContainer.innerHTML = '';
 
     if (!items || items.length === 0) {
+        console.log('No items to render, showing no items message');
         menuContainer.innerHTML = '<p style="text-align: center; padding: 2rem; color: #999;">No items to display</p>';
         return;
     }
@@ -416,14 +425,16 @@ function renderMenu(items = menuData) {
     
     items.forEach((item, index) => {
         try {
+            console.log(`Creating element for item ${index}:`, item.name);
             const menuItemElement = createMenuItemElement(item);
             menuContainer.appendChild(menuItemElement);
+            console.log(`Added item ${index} to container`);
         } catch (error) {
             console.error(`Error creating menu item element for item ${index}:`, error, item);
         }
     });
 
-    console.log(`Finished rendering menu items`);
+    console.log(`Finished rendering menu items. Container HTML length:`, menuContainer.innerHTML.length);
 }
 
 function createMenuItemElement(item) {
