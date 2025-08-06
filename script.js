@@ -395,16 +395,15 @@ function addToCart(itemId) {
         return;
     }
 
-    // Check if item has variant
-    if (item.variant && item.variant.trim()) {
-        // Show variant selection modal for any item with variant
-        selectedItemForVariant = item;
-        showVariantModal(item);
+    // Case 1: Empty variant - add directly to cart without popup
+    if (!item.variant || !item.variant.trim()) {
+        addItemToCart(item, '');
         return;
     }
 
-    // No variants, add directly to cart
-    addItemToCart(item, '');
+    // Cases 2 & 3: Has variant - show selection modal
+    selectedItemForVariant = item;
+    showVariantModal(item);
 }
 
 function addItemToCart(item, variantNote) {
@@ -1014,93 +1013,55 @@ function showVariantModal(item) {
     // Clear previous options
     optionsContainer.innerHTML = '';
     
-    const variantParts = item.variant.split('|');
-    const baseVariant = variantParts[0].trim();
-    
-    // Always add base variant as first option
-    const baseOptionDiv = document.createElement('div');
-    baseOptionDiv.className = 'variant-option';
-    baseOptionDiv.onclick = () => selectVariantOption('', baseOptionDiv);
-    
-    baseOptionDiv.innerHTML = `
-        <input type="radio" name="variantOption" value="" id="variant_base">
-        <label for="variant_base">${baseVariant}</label>
-    `;
-    
-    optionsContainer.appendChild(baseOptionDiv);
-    
-    // Add additional options if they exist (text after |)
-    if (variantParts.length > 1) {
-        const optionsText = variantParts[1].trim();
-        const optionGroups = optionsText.split(',').map(opt => opt.trim()).filter(opt => opt);
+    // Check if variant contains "|" character
+    if (item.variant.includes('|')) {
+        // Case 3: Variant contains "|" - e.g., "Ayam|Pedas,Tdk Pedas"
+        const variantParts = item.variant.split('|');
+        const variantName = variantParts[0].trim();
+        const options = variantParts[1].split(',').map(opt => opt.trim()).filter(opt => opt);
         
-        // Check if we have multiple groups (like protein and spice level)
-        // We'll create separate radio button groups for each logical group
-        const proteinOptions = [];
-        const spiceOptions = [];
+        // Add variant name header
+        const variantHeader = document.createElement('div');
+        variantHeader.innerHTML = `<h4 style="margin: 10px 0 5px 0; font-size: 0.9rem;">Varian: ${variantName}</h4>`;
+        optionsContainer.appendChild(variantHeader);
         
-        optionGroups.forEach(option => {
-            const lowerOption = option.toLowerCase();
-            if (lowerOption.includes('ayam') || lowerOption.includes('seafood') || lowerOption.includes('daging') || lowerOption.includes('ikan')) {
-                proteinOptions.push(option);
-            } else if (lowerOption.includes('pedas') || lowerOption.includes('tidak pedas') || lowerOption.includes('tdk pedas') || lowerOption.includes('mild') || lowerOption.includes('spicy')) {
-                spiceOptions.push(option);
-            } else {
-                // Default group for other options
-                proteinOptions.push(option);
-            }
+        // Add options header
+        const optionHeader = document.createElement('div');
+        optionHeader.innerHTML = `<h4 style="margin: 15px 0 5px 0; font-size: 0.9rem;">Option:</h4>`;
+        optionsContainer.appendChild(optionHeader);
+        
+        // Create radio buttons for options
+        options.forEach((option, index) => {
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'variant-option';
+            optionDiv.onclick = () => selectVariantOption(option, optionDiv);
+            
+            optionDiv.innerHTML = `
+                <input type="radio" name="variantOption" value="${option}" id="option_${index}">
+                <label for="option_${index}">${option}</label>
+            `;
+            
+            optionsContainer.appendChild(optionDiv);
         });
+    } else {
+        // Case 2: Variant doesn't contain "|" - show all variants of same item name
+        const sameNameItems = menuData.filter(menuItem => menuItem.name === item.name && menuItem.variant.trim());
         
-        // Create protein options group
-        if (proteinOptions.length > 0) {
-            const proteinGroupDiv = document.createElement('div');
-            proteinGroupDiv.innerHTML = '<h4 style="margin: 10px 0 5px 0; font-size: 0.9rem;">Pilih Jenis:</h4>';
-            optionsContainer.appendChild(proteinGroupDiv);
+        if (sameNameItems.length > 0) {
+            // Add varian header
+            const variantHeader = document.createElement('div');
+            variantHeader.innerHTML = `<h4 style="margin: 10px 0 5px 0; font-size: 0.9rem;">Varian:</h4>`;
+            optionsContainer.appendChild(variantHeader);
             
-            proteinOptions.forEach((option, index) => {
+            // Create radio buttons for each variant
+            sameNameItems.forEach((variantItem, index) => {
                 const optionDiv = document.createElement('div');
                 optionDiv.className = 'variant-option';
-                optionDiv.onclick = () => selectVariantOption(option, optionDiv, 'protein');
+                optionDiv.onclick = () => selectVariantOption(variantItem.variant, optionDiv);
                 
                 optionDiv.innerHTML = `
-                    <input type="radio" name="proteinOption" value="${option}" id="protein_${index}">
-                    <label for="protein_${index}">${option}</label>
-                `;
-                
-                optionsContainer.appendChild(optionDiv);
-            });
-        }
-        
-        // Create spice options group
-        if (spiceOptions.length > 0) {
-            const spiceGroupDiv = document.createElement('div');
-            spiceGroupDiv.innerHTML = '<h4 style="margin: 15px 0 5px 0; font-size: 0.9rem;">Tingkat Pedas:</h4>';
-            optionsContainer.appendChild(spiceGroupDiv);
-            
-            spiceOptions.forEach((option, index) => {
-                const optionDiv = document.createElement('div');
-                optionDiv.className = 'variant-option';
-                optionDiv.onclick = () => selectVariantOption(option, optionDiv, 'spice');
-                
-                optionDiv.innerHTML = `
-                    <input type="radio" name="spiceOption" value="${option}" id="spice_${index}">
-                    <label for="spice_${index}">${option}</label>
-                `;
-                
-                optionsContainer.appendChild(optionDiv);
-            });
-        }
-        
-        // If no protein or spice options detected, create simple list
-        if (proteinOptions.length === 0 && spiceOptions.length === 0) {
-            optionGroups.forEach((option, index) => {
-                const optionDiv = document.createElement('div');
-                optionDiv.className = 'variant-option';
-                optionDiv.onclick = () => selectVariantOption(option, optionDiv);
-                
-                optionDiv.innerHTML = `
-                    <input type="radio" name="variantOption" value="${option}" id="variant_${index + 1}">
-                    <label for="variant_${index + 1}">${baseVariant} + ${option}</label>
+                    <input type="radio" name="variantOption" value="${variantItem.variant}" id="variant_${index}">
+                    <label for="variant_${index}">${variantItem.variant}</label>
                 `;
                 
                 optionsContainer.appendChild(optionDiv);
@@ -1117,55 +1078,23 @@ function showVariantModal(item) {
     modal.classList.add('active');
 }
 
-function selectVariantOption(option, optionElement, group = 'variant') {
-    if (group === 'protein') {
-        // Remove previous protein selection
-        document.querySelectorAll('input[name="proteinOption"]').forEach(input => {
-            input.checked = false;
-            input.closest('.variant-option').classList.remove('selected');
-        });
-        
-        // Select current protein option
-        optionElement.classList.add('selected');
-        optionElement.querySelector('input').checked = true;
-        selectedProteinOption = option;
-    } else if (group === 'spice') {
-        // Remove previous spice selection
-        document.querySelectorAll('input[name="spiceOption"]').forEach(input => {
-            input.checked = false;
-            input.closest('.variant-option').classList.remove('selected');
-        });
-        
-        // Select current spice option
-        optionElement.classList.add('selected');
-        optionElement.querySelector('input').checked = true;
-        selectedSpiceOption = option;
-    } else {
-        // Remove previous selection for simple variant
-        document.querySelectorAll('input[name="variantOption"]').forEach(input => {
-            input.checked = false;
-            input.closest('.variant-option').classList.remove('selected');
-        });
-        
-        // Select current option
-        optionElement.classList.add('selected');
-        optionElement.querySelector('input').checked = true;
-        selectedVariantOption = option;
-    }
+function selectVariantOption(option, optionElement) {
+    // Remove previous selection
+    document.querySelectorAll('input[name="variantOption"]').forEach(input => {
+        input.checked = false;
+        input.closest('.variant-option').classList.remove('selected');
+    });
+    
+    // Select current option
+    optionElement.classList.add('selected');
+    optionElement.querySelector('input').checked = true;
+    selectedVariantOption = option;
 }
 
 function confirmVariantSelection() {
-    let finalVariantNote = '';
-    
-    // Check if we have protein and spice options (multiple groups)
-    if (selectedProteinOption !== null || selectedSpiceOption !== null) {
-        const notes = [];
-        if (selectedProteinOption) notes.push(selectedProteinOption);
-        if (selectedSpiceOption) notes.push(selectedSpiceOption);
-        finalVariantNote = notes.join(', ');
-    } else if (selectedVariantOption !== null) {
-        // Simple single variant selection
-        finalVariantNote = selectedVariantOption;
+    if (!selectedVariantOption) {
+        alert('Silakan pilih varian terlebih dahulu');
+        return;
     }
     
     if (!selectedItemForVariant) {
@@ -1174,7 +1103,7 @@ function confirmVariantSelection() {
     }
     
     // Add item to cart with selected variant as note
-    addItemToCart(selectedItemForVariant, finalVariantNote);
+    addItemToCart(selectedItemForVariant, selectedVariantOption);
     
     // Close modal
     closeVariantModal();
@@ -1184,8 +1113,6 @@ function closeVariantModal() {
     document.getElementById('variantModal').classList.remove('active');
     selectedItemForVariant = null;
     selectedVariantOption = null;
-    selectedProteinOption = null;
-    selectedSpiceOption = null;
 }
 
 // Utility functions
