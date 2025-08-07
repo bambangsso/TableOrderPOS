@@ -1029,91 +1029,123 @@ function showVariantModal(item) {
     if (item.variant.includes('|')) {
         console.log('Item has complex variant with |:', item.variant);
         
-        // Case 3: Variant contains "|" - e.g., "Ayam|Pedas,Tdk Pedas"
-        // Find all items with same name from the original filtered data
-        const sameNameItems = [];
-        
-        // Check current menuData
-        menuData.forEach(menuItem => {
-            if (menuItem.name === item.name) {
-                if (menuItem.variant.includes('|')) {
-                    sameNameItems.push(menuItem);
-                }
-                // Also check allVariants array if it exists
-                if (menuItem.allVariants && menuItem.allVariants.length > 0) {
-                    menuItem.allVariants.forEach(variant => {
-                        if (variant && variant.includes('|')) {
-                            sameNameItems.push({
-                                ...menuItem,
-                                variant: variant
-                            });
-                        }
-                    });
-                }
+        // Special case: If variant starts with "|", treat as simple options (no main variant)
+        if (item.variant.startsWith('|')) {
+            console.log('Variant starts with |, treating as simple options');
+            
+            // Extract options after the "|"
+            const options = item.variant.substring(1).split(',').map(opt => opt.trim()).filter(opt => opt);
+            
+            if (options.length > 0) {
+                // Add varian header
+                const variantHeader = document.createElement('div');
+                variantHeader.innerHTML = `<h4 style="margin: 10px 0 5px 0; font-size: 0.9rem;">Pilih:</h4>`;
+                optionsContainer.appendChild(variantHeader);
+
+                // Create radio buttons for each option
+                options.forEach((option, index) => {
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'variant-option';
+                    optionDiv.onclick = () => selectVariantOption(option, optionDiv);
+
+                    optionDiv.innerHTML = `
+                        <input type="radio" name="variantOption" value="${option}" id="variant_${index}">
+                        <label for="variant_${index}">${option}</label>
+                    `;
+
+                    optionsContainer.appendChild(optionDiv);
+                });
             }
-        });
+        } else {
+            // Case 3: Variant contains "|" - e.g., "Ayam|Pedas,Tdk Pedas"
+            // Find all items with same name from the original filtered data
+            const sameNameItems = [];
+            
+            // Check current menuData
+            menuData.forEach(menuItem => {
+                if (menuItem.name === item.name) {
+                    if (menuItem.variant.includes('|')) {
+                        sameNameItems.push(menuItem);
+                    }
+                    // Also check allVariants array if it exists
+                    if (menuItem.allVariants && menuItem.allVariants.length > 0) {
+                        menuItem.allVariants.forEach(variant => {
+                            if (variant && variant.includes('|')) {
+                                sameNameItems.push({
+                                    ...menuItem,
+                                    variant: variant
+                                });
+                            }
+                        });
+                    }
+                }
+            });
 
-        // Also parse the current item's variant directly
-        if (item.variant.includes('|')) {
-            sameNameItems.push(item);
-        }
-
-        console.log('Same name items with | variants:', sameNameItems);
-
-        // Extract all main variants (before |) and options (after |)
-        const mainVariants = new Set();
-        const optionsSet = new Set();
-
-        sameNameItems.forEach(menuItem => {
-            const variantParts = menuItem.variant.split('|');
-            if (variantParts.length >= 2) {
-                mainVariants.add(variantParts[0].trim());
-                const options = variantParts[1].split(',').map(opt => opt.trim()).filter(opt => opt);
-                options.forEach(opt => optionsSet.add(opt));
+            // Also parse the current item's variant directly
+            if (item.variant.includes('|')) {
+                sameNameItems.push(item);
             }
-        });
 
-        console.log('Extracted main variants:', Array.from(mainVariants));
-        console.log('Extracted options:', Array.from(optionsSet));
+            console.log('Same name items with | variants:', sameNameItems);
 
-        // Add main variant selection
-        if (mainVariants.size > 0) {
-            const variantHeader = document.createElement('div');
-            variantHeader.innerHTML = `<h4 style="margin: 10px 0 5px 0; font-size: 0.9rem;">Varian:</h4>`;
-            optionsContainer.appendChild(variantHeader);
+            // Extract all main variants (before |) and options (after |)
+            const mainVariants = new Set();
+            const optionsSet = new Set();
 
-            Array.from(mainVariants).forEach((variant, index) => {
-                const optionDiv = document.createElement('div');
-                optionDiv.className = 'variant-option';
-                optionDiv.onclick = () => selectMainVariant(variant, optionDiv);
-
-                optionDiv.innerHTML = `
-                    <input type="radio" name="mainVariant" value="${variant}" id="main_variant_${index}">
-                    <label for="main_variant_${index}">${variant}</label>
-                `;
-
-                optionsContainer.appendChild(optionDiv);
+            sameNameItems.forEach(menuItem => {
+                const variantParts = menuItem.variant.split('|');
+                if (variantParts.length >= 2) {
+                    const mainVariant = variantParts[0].trim();
+                    if (mainVariant) { // Only add non-empty main variants
+                        mainVariants.add(mainVariant);
+                    }
+                    const options = variantParts[1].split(',').map(opt => opt.trim()).filter(opt => opt);
+                    options.forEach(opt => optionsSet.add(opt));
+                }
             });
-        }
 
-        // Add options selection
-        if (optionsSet.size > 0) {
-            const optionHeader = document.createElement('div');
-            optionHeader.innerHTML = `<h4 style="margin: 15px 0 5px 0; font-size: 0.9rem;">Option:</h4>`;
-            optionsContainer.appendChild(optionHeader);
+            console.log('Extracted main variants:', Array.from(mainVariants));
+            console.log('Extracted options:', Array.from(optionsSet));
 
-            Array.from(optionsSet).forEach((option, index) => {
-                const optionDiv = document.createElement('div');
-                optionDiv.className = 'variant-option';
-                optionDiv.onclick = () => selectAdditionalOption(option, optionDiv);
+            // Add main variant selection
+            if (mainVariants.size > 0) {
+                const variantHeader = document.createElement('div');
+                variantHeader.innerHTML = `<h4 style="margin: 10px 0 5px 0; font-size: 0.9rem;">Varian:</h4>`;
+                optionsContainer.appendChild(variantHeader);
 
-                optionDiv.innerHTML = `
-                    <input type="radio" name="additionalOption" value="${option}" id="additional_option_${index}">
-                    <label for="additional_option_${index}">${option}</label>
-                `;
+                Array.from(mainVariants).forEach((variant, index) => {
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'variant-option';
+                    optionDiv.onclick = () => selectMainVariant(variant, optionDiv);
 
-                optionsContainer.appendChild(optionDiv);
-            });
+                    optionDiv.innerHTML = `
+                        <input type="radio" name="mainVariant" value="${variant}" id="main_variant_${index}">
+                        <label for="main_variant_${index}">${variant}</label>
+                    `;
+
+                    optionsContainer.appendChild(optionDiv);
+                });
+            }
+
+            // Add options selection
+            if (optionsSet.size > 0) {
+                const optionHeader = document.createElement('div');
+                optionHeader.innerHTML = `<h4 style="margin: 15px 0 5px 0; font-size: 0.9rem;">Option:</h4>`;
+                optionsContainer.appendChild(optionHeader);
+
+                Array.from(optionsSet).forEach((option, index) => {
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'variant-option';
+                    optionDiv.onclick = () => selectAdditionalOption(option, optionDiv);
+
+                    optionDiv.innerHTML = `
+                        <input type="radio" name="additionalOption" value="${option}" id="additional_option_${index}">
+                        <label for="additional_option_${index}">${option}</label>
+                    `;
+
+                    optionsContainer.appendChild(optionDiv);
+                });
+            }
         }
 
     } else {
@@ -1226,12 +1258,12 @@ function confirmVariantSelection() {
 
     let variantNote = '';
 
-    // Case 2: Simple variant (no |)
+    // Case 2: Simple variant (no |) or variant starting with | (simple options)
     if (selectedVariantOption) {
         variantNote = selectedVariantOption;
     }
-    // Case 3: Complex variant (with |)
-    else if (selectedMainVariant || selectedAdditionalOption) {
+    // Case 3: Complex variant (with |) - both main variant and option required
+    else if (selectedItemForVariant.variant.includes('|') && !selectedItemForVariant.variant.startsWith('|')) {
         if (!selectedMainVariant) {
             alert('Silakan pilih varian terlebih dahulu');
             return;
